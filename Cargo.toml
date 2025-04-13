@@ -1,6 +1,11 @@
 [package]
 name = "nature-rs"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
+authors = ["MuhammadMNorouzi@gmail.com>"]
+description = "Blackbox"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/alireza/awesome_crate"
 
 [dependencies]
