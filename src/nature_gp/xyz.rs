@@ -6,7 +6,7 @@ use super::gp::{GP, NGP};
 
 pub trait XYZ
 where
-    Self: Clone + PartialEq + Eq,
+    Self: Clone + PartialEq + Eq + From<f64> + Debug,
 {
     fn cross_square_magnitude(&self, other: &Self) -> f64;
     fn set_linear_form02(&mut self, xyz1: &Self, xyz2: &Self);
@@ -47,7 +47,6 @@ where
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors>;
     fn coord_by_index(&mut self, index: usize) -> Result<f64, NErrors>;
     fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors>;
-    fn from(scalar: f64) -> Self;
     fn new(x: f64, y: f64, z: f64) -> Self;
     fn zero() -> Self;
     fn multiply_xyz(&mut self, other: &Self);
@@ -76,6 +75,12 @@ pub struct NXYZ {
     x: f64,
     y: f64,
     z: f64,
+}
+
+impl From<f64> for NXYZ {
+    fn from(scalar: f64) -> Self {
+        Self::new(scalar, scalar, scalar)
+    }
 }
 
 impl Clone for NXYZ {
@@ -284,14 +289,6 @@ impl XYZ for NXYZ {
         Ok(())
     }
 
-    fn from(scalar: f64) -> Self {
-        Self {
-            x: scalar,
-            y: scalar,
-            z: scalar,
-        }
-    }
-
     fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
     }
@@ -450,19 +447,41 @@ mod tests_gp_xyz {
     fn test_add_subtract() {
         let a = vec(1.0, 2.0, 3.0);
         let b = vec(4.0, 5.0, 6.0);
+        let mut a_cloned = a.clone();
+        let mut b_cloned = b.clone();
+        a_cloned.add(&b);
+        b_cloned.subtract(&a);
+
+        assert_eq!(a_cloned, vec(5.0, 7.0, 9.0));
+        assert_eq!(b_cloned, vec(3.0, 3.0, 3.0));
+    }
+
+    #[test]
+    fn test_added_subtracted() {
+        let a = vec(1.0, 2.0, 3.0);
+        let b = vec(4.0, 5.0, 6.0);
         assert_eq!(a.added(&b), vec(5.0, 7.0, 9.0));
         assert_eq!(b.subtracted(&a), vec(3.0, 3.0, 3.0));
     }
 
     #[test]
     fn test_multiply_divide() {
+        let mut a = vec(2.0, 4.0, 6.0);
+        a.multiply(2.0);
+        assert_eq!(a, vec(4.0, 8.0, 12.0));
+        a.divide(4.0);
+        assert_eq!(a, vec(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    fn test_multiplied_divided() {
         let a = vec(2.0, 4.0, 6.0);
         assert_eq!(a.multiplied(2.0), vec(4.0, 8.0, 12.0));
         assert_eq!(a.divided(2.0), vec(1.0, 2.0, 3.0));
     }
 
     #[test]
-    fn test_reverse() {
+    fn test_reverse_reversed() {
         let mut a = vec(1.0, -2.0, 3.0);
         let reversed = a.reversed();
         assert_eq!(reversed, vec(-1.0, 2.0, -3.0));
@@ -471,10 +490,13 @@ mod tests_gp_xyz {
     }
 
     #[test]
-    fn test_cross_and_dot() {
+    fn test_cross_crossed_and_dot() {
         let a = vec(1.0, 0.0, 0.0);
         let b = vec(0.0, 1.0, 0.0);
         assert_eq!(a.crossed(&b), vec(0.0, 0.0, 1.0));
+        let mut a_cloned = a.clone();
+        a_cloned.cross(&b);
+        assert_eq!(a_cloned, vec(0.0, 0.0, 1.0));
         assert_eq!(a.dot(&b), 0.0);
         assert_eq!(a.dot(&a), 1.0);
     }
@@ -501,9 +523,10 @@ mod tests_gp_xyz {
     }
 
     #[test]
-    fn test_normalize_success() {
+    fn test_normalize_normalize_success() {
         let mut a = vec(3.0, 4.0, 0.0);
         assert!(a.normalize().is_ok());
+        assert_eq!(a, vec(0.6, 0.8, 0.0));
         assert!((a.modulus() - 1.0).abs() < 1e-10);
     }
 
@@ -651,5 +674,33 @@ mod tests_gp_xyz {
         assert_eq!(a, vec(1.0, 2.0, 3.0));
         a.set_coords(4.0, 5.0, 6.0);
         assert_eq!(a, vec(4.0, 5.0, 6.0));
+    }
+
+    #[test]
+    fn test_from() {
+        let a = NXYZ::from(5.0);
+        assert_eq!(a, vec(5.0, 5.0, 5.0));
+    }
+
+    #[test]
+    fn test_new() {
+        let a = NXYZ::new(1.0, 2.0, 3.0);
+        assert_eq!(a, vec(1.0, 2.0, 3.0));
+    }
+
+    #[test]
+    fn test_zero() {
+        let a = NXYZ::zero();
+        assert_eq!(a, vec(0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn test_modulus_square_modulus() {
+        let a = vec(3.0, 4.0, 0.0);
+        let b = NXYZ::from(1.0);
+        assert_eq!(a.modulus(), 5.0);
+        assert_eq!(a.square_modulus(), 25.0);
+        assert_eq!(b.modulus(), f64::sqrt(3.0));
+        assert_eq!(b.square_modulus(), 3.0);
     }
 }
