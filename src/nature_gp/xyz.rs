@@ -558,6 +558,7 @@ mod tests_gp_xyz {
 
         let mut target = NXYZ::zero();
         target.set_linear_form34(1.0, &a, 2.0, &b, 3.0, &c, &d);
+
         assert_eq!(
             target,
             vec(
@@ -568,11 +569,48 @@ mod tests_gp_xyz {
         );
 
         target.set_linear_form33(1.0, &a, 2.0, &b, 3.0, &c);
+
+        assert_eq!(
+            target,
+            vec(
+                1.0 * 1.0 + 2.0 * 4.0 + 3.0 * 7.0,
+                1.0 * 2.0 + 2.0 * 5.0 + 3.0 * 8.0,
+                1.0 * 3.0 + 2.0 * 6.0 + 3.0 * 9.0
+            )
+        );
+
         target.set_linear_form23(1.0, &a, 2.0, &b, &c);
+
+        assert_eq!(
+            target,
+            vec(
+                1.0 * 1.0 + 2.0 * 4.0 + 7.0,
+                1.0 * 2.0 + 2.0 * 5.0 + 8.0,
+                1.0 * 3.0 + 2.0 * 6.0 + 9.0
+            )
+        );
+
         target.set_linear_form22(1.0, &a, 2.0, &b);
+
+        assert_eq!(
+            target,
+            vec(
+                1.0 * 1.0 + 2.0 * 4.0,
+                1.0 * 2.0 + 2.0 * 5.0,
+                1.0 * 3.0 + 2.0 * 6.0
+            )
+        );
+
         target.set_linear_form12(1.0, &a, &b);
+
+        assert_eq!(
+            target,
+            vec(1.0 * 1.0 + 4.0, 1.0 * 2.0 + 5.0, 1.0 * 3.0 + 6.0)
+        );
+
         target.set_linear_form02(&a, &b);
-        // Just checking no panics and values are assigned
+
+        assert_eq!(target, vec(1.0 + 4.0, 2.0 + 5.0, 3.0 + 6.0));
     }
 
     #[test]
