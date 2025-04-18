@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use crate::nature_errors::NErrors;
 
-use super::geometric_processor::{GeometricProcessor, NGP};
+use super::gp::{GP, NGP};
 
 pub trait XYZ
 where
@@ -22,6 +22,7 @@ where
         a3: f64,
         xyz3: &Self,
     );
+    #[allow(clippy::too_many_arguments)]
     fn set_linear_form34(
         &mut self,
         a1: f64,
@@ -80,9 +81,9 @@ pub struct NXYZ {
 impl Clone for NXYZ {
     fn clone(&self) -> Self {
         Self {
-            x: self.x.clone(),
-            y: self.y.clone(),
-            z: self.z.clone(),
+            x: self.x,
+            y: self.y,
+            z: self.z,
         }
     }
 }
@@ -106,6 +107,66 @@ impl Debug for NXYZ {
 }
 
 impl XYZ for NXYZ {
+    fn cross_square_magnitude(&self, other: &Self) -> f64 {
+        let x_result = self.y * other.z - self.z * other.y;
+        let y_result = self.z * other.x - self.x * other.z;
+        let z_result = self.x * other.y - self.y * other.x;
+        x_result.powi(2) + y_result.powi(2) + z_result.powi(2)
+    }
+
+    fn set_linear_form02(&mut self, xyz1: &Self, xyz2: &Self) {
+        self.x = xyz1.x + xyz2.x;
+        self.y = xyz1.y + xyz2.y;
+        self.z = xyz1.z + xyz2.z;
+    }
+
+    fn set_linear_form12(&mut self, a1: f64, xyz1: &Self, xyz2: &Self) {
+        self.x = a1 * xyz1.x + xyz2.x;
+        self.y = a1 * xyz1.y + xyz2.y;
+        self.z = a1 * xyz1.z + xyz2.z;
+    }
+
+    fn set_linear_form22(&mut self, a1: f64, xyz1: &Self, a2: f64, xyz2: &Self) {
+        self.x = a1 * xyz1.x + a2 * xyz2.x;
+        self.y = a1 * xyz1.y + a2 * xyz2.y;
+        self.z = a1 * xyz1.z + a2 * xyz2.z;
+    }
+
+    fn set_linear_form23(&mut self, a1: f64, xyz1: &Self, a2: f64, xyz2: &Self, xyz3: &Self) {
+        self.x = a1 * xyz1.x + a2 * xyz2.x + xyz3.x;
+        self.y = a1 * xyz1.y + a2 * xyz2.y + xyz3.y;
+        self.z = a1 * xyz1.z + a2 * xyz2.z + xyz3.z;
+    }
+
+    fn set_linear_form33(
+        &mut self,
+        a1: f64,
+        xyz1: &Self,
+        a2: f64,
+        xyz2: &Self,
+        a3: f64,
+        xyz3: &Self,
+    ) {
+        self.x = a1 * xyz1.x + a2 * xyz2.x + a3 * xyz3.x;
+        self.y = a1 * xyz1.y + a2 * xyz2.y + a3 * xyz3.y;
+        self.z = a1 * xyz1.z + a2 * xyz2.z + a3 * xyz3.z;
+    }
+
+    fn set_linear_form34(
+        &mut self,
+        a1: f64,
+        xyz1: &Self,
+        a2: f64,
+        xyz2: &Self,
+        a3: f64,
+        xyz3: &Self,
+        xyz4: &Self,
+    ) {
+        self.x = a1 * xyz1.x + a2 * xyz2.x + a3 * xyz3.x + xyz4.x;
+        self.y = a1 * xyz1.y + a2 * xyz2.y + a3 * xyz3.y + xyz4.y;
+        self.z = a1 * xyz1.z + a2 * xyz2.z + a3 * xyz3.z + xyz4.z;
+    }
+
     fn cross_crossed(&self, left: &Self, right: &Self) -> Self {
         let mut self_clone = self.clone();
         self_clone.cross_cross(left, right);
@@ -316,6 +377,13 @@ impl XYZ for NXYZ {
         self.y = y_result;
     }
 
+    fn cross_magnitude(&self, other: &Self) -> f64 {
+        let x_result = self.y * other.z - self.z * other.y;
+        let y_result = self.z * other.x - self.x * other.z;
+        let z_result = self.x * other.y - self.y * other.x;
+        f64::sqrt(x_result.powi(2) + y_result.powi(2) + z_result.powi(2))
+    }
+
     fn normalize(&mut self) -> Result<(), NErrors> {
         let m = self.modulus();
 
@@ -328,22 +396,6 @@ impl XYZ for NXYZ {
         self.z /= m;
 
         Ok(())
-    }
-
-    fn modulus(&self) -> f64 {
-        f64::sqrt(self.x.powi(2) + self.y.powi(2) + self.z.powi(2))
-    }
-
-    fn square_modulus(&self) -> f64 {
-        todo!()
-    }
-
-    fn is_equal(&self, other: &Self, tolerance: f64) -> bool {
-        let val_x = self.x - other.x;
-        let val_y = self.y - other.y;
-        let val_z = self.z - other.z;
-
-        return val_x.abs() <= tolerance && val_y.abs() <= tolerance && val_z.abs() <= tolerance;
     }
 
     fn normalized(&self) -> Result<Self, NErrors> {
@@ -360,71 +412,20 @@ impl XYZ for NXYZ {
         })
     }
 
-    fn set_linear_form34(
-        &mut self,
-        a1: f64,
-        xyz1: &Self,
-        a2: f64,
-        xyz2: &Self,
-        a3: f64,
-        xyz3: &Self,
-        xyz4: &Self,
-    ) {
-        self.x = a1 * xyz1.x + a2 * xyz2.x + a3 * xyz3.x + xyz4.x;
-        self.y = a1 * xyz1.y + a2 * xyz2.y + a3 * xyz3.y + xyz4.y;
-        self.z = a1 * xyz1.z + a2 * xyz2.z + a3 * xyz3.z + xyz4.z;
+    fn modulus(&self) -> f64 {
+        f64::sqrt(self.square_modulus())
     }
 
-    fn set_linear_form33(
-        &mut self,
-        a1: f64,
-        xyz1: &Self,
-        a2: f64,
-        xyz2: &Self,
-        a3: f64,
-        xyz3: &Self,
-    ) {
-        self.x = a1 * xyz1.x + a2 * xyz2.x + a3 * xyz3.x;
-        self.y = a1 * xyz1.y + a2 * xyz2.y + a3 * xyz3.y;
-        self.z = a1 * xyz1.z + a2 * xyz2.z + a3 * xyz3.z;
+    fn square_modulus(&self) -> f64 {
+        self.x.powi(2) + self.y.powi(2) + self.z.powi(2)
     }
 
-    fn set_linear_form23(&mut self, a1: f64, xyz1: &Self, a2: f64, xyz2: &Self, xyz3: &Self) {
-        self.x = a1 * xyz1.x + a2 * xyz2.x + xyz3.x;
-        self.y = a1 * xyz1.y + a2 * xyz2.y + xyz3.y;
-        self.z = a1 * xyz1.z + a2 * xyz2.z + xyz3.z;
-    }
+    fn is_equal(&self, other: &Self, tolerance: f64) -> bool {
+        let val_x = self.x - other.x;
+        let val_y = self.y - other.y;
+        let val_z = self.z - other.z;
 
-    fn set_linear_form22(&mut self, a1: f64, xyz1: &Self, a2: f64, xyz2: &Self) {
-        self.x = a1 * xyz1.x + a2 * xyz2.x;
-        self.y = a1 * xyz1.y + a2 * xyz2.y;
-        self.z = a1 * xyz1.z + a2 * xyz2.z;
-    }
-
-    fn set_linear_form12(&mut self, a1: f64, xyz1: &Self, xyz2: &Self) {
-        self.x = a1 * xyz1.x + xyz2.x;
-        self.y = a1 * xyz1.y + xyz2.y;
-        self.z = a1 * xyz1.z + xyz2.z;
-    }
-
-    fn set_linear_form02(&mut self, xyz1: &Self, xyz2: &Self) {
-        self.x = xyz1.x + xyz2.x;
-        self.y = xyz1.y + xyz2.y;
-        self.z = xyz1.z + xyz2.z;
-    }
-
-    fn cross_magnitude(&self, other: &Self) -> f64 {
-        let x_result = self.y * other.z - self.z * other.y;
-        let y_result = self.z * other.x - self.x * other.z;
-        let z_result = self.x * other.y - self.y * other.x;
-        return f64::sqrt(x_result.powi(2) + y_result.powi(2) + z_result.powi(2));
-    }
-
-    fn cross_square_magnitude(&self, other: &Self) -> f64 {
-        let x_result = self.y * other.z - self.z * other.y;
-        let y_result = self.z * other.x - self.x * other.z;
-        let z_result = self.x * other.y - self.y * other.x;
-        return x_result.powi(2) + y_result.powi(2) + z_result.powi(2);
+        val_x.abs() <= tolerance && val_y.abs() <= tolerance && val_z.abs() <= tolerance
     }
 }
 
