@@ -6,7 +6,7 @@ use super::gp::{GP, NGP};
 
 pub trait XYZ
 where
-    Self: Clone + PartialEq + Eq + From<f64> + Debug,
+    Self: Default + Clone + PartialEq + Eq + From<f64> + Debug,
 {
     fn cross_square_magnitude(&self, other: &Self) -> f64;
     fn set_linear_form02(&mut self, xyz1: &Self, xyz2: &Self);
@@ -75,6 +75,16 @@ pub struct NXYZ {
     x: f64,
     y: f64,
     z: f64,
+}
+
+impl Default for NXYZ {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
 }
 
 impl From<f64> for NXYZ {
