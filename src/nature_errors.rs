@@ -3,6 +3,8 @@ use std::fmt::Debug;
 pub enum NErrors {
     IndexOutOfRange,
     DivisionByZero,
+    InvalidDirection,
+    ParallelVectors,
 }
 
 impl PartialEq for NErrors {
@@ -14,8 +16,10 @@ impl PartialEq for NErrors {
 impl Debug for NErrors {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::IndexOutOfRange => write!(f, "IndexOutOfRange"),
-            Self::DivisionByZero => write!(f, "DivisionByZero"),
+            NErrors::IndexOutOfRange => write!(f, "IndexOutOfRange"),
+            NErrors::DivisionByZero => write!(f, "DivisionByZero"),
+            NErrors::InvalidDirection => write!(f, "InvalidDirection"),
+            NErrors::ParallelVectors => write!(f, "ParallelVectors"),
         }
     }
 }
