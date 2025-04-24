@@ -4,7 +4,7 @@ use crate::nature_errors::NErrors;
 
 use super::gp::{GP, NGP};
 
-pub trait YZ
+pub trait XY
 where
     Self: Default + Clone + PartialEq + Eq + From<f64> + Debug,
 {
@@ -88,7 +88,7 @@ impl Debug for NXY {
     }
 }
 
-impl YZ for NXY {
+impl XY for NXY {
     fn cross_square_magnitude(&self, other: &Self) -> f64 {
         let a = self.x * other.y - self.y * other.x;
         a * a

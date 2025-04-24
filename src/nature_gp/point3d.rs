@@ -65,7 +65,7 @@ pub trait Pnt {
 }
 
 // Struct representing a 3D Cartesian point
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
 pub struct NPnt {
     coord: NXYZ,
 }

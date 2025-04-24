@@ -1,538 +1,140 @@
-use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
-use std::io::Write;
+use std::f64;
 
-use crate::gp::NatureError;
+use super::{
+    ax1::{Ax1, NAx1},
+    ax2::{Ax2, NAx2},
+    ax2d::{Ax2d, NAx2d},
+    dir::{Dir, NDir},
+    dir2d::{Dir2d, NDir2d},
+    point2d::{NPnt2d, Pnt2d},
+    point3d::{NPnt, Pnt},
+};
 
-use super::xyz::NXYZ;
+pub trait GP {
+    fn resolution() -> f64;
 
-pub mod gp {
-    /// Tolerance for floating-point comparisons.
-    pub fn resolution() -> f64 {
-        1e-12 // Consistent with vec.rs, vec2d.rs, etc.
-    }
+    /// Identifies a Cartesian point with coordinates X = Y = Z = 0.0.
+    fn origin() -> NPnt;
 
-    pub fn resolution_f32() -> f32 {
-        1e-6 // Consistent with vec2f.rs, vec3f.rs
-    }
+    /// Returns a unit vector with the combination (1,0,0).
+    fn dx() -> NDir;
+
+    /// Returns a unit vector with the combination (0,1,0).
+    fn dy() -> NDir;
+
+    /// Returns a unit vector with the combination (0,0,1).
+    fn dz() -> NDir;
+
+    /// Identifies an axis where its origin is Origin and its unit vector coordinates X = 1.0, Y = Z = 0.0.
+    fn ox() -> NAx1;
+
+    /// Identifies an axis where its origin is Origin and its unit vector coordinates Y = 1.0, X = Z = 0.0.
+    fn oy() -> NAx1;
+
+    /// Identifies an axis where its origin is Origin and its unit vector coordinates Z = 1.0, Y = X = 0.0.
+    fn oz() -> NAx1;
+
+    /// Identifies a coordinate system where its origin is Origin,
+    /// and its main direction and X direction coordinates Z = 1.0, X = Y = 0.0
+    /// and X direction coordinates X = 1.0, Y = Z = 0.0.
+    fn xoy() -> NAx2;
+
+    /// Identifies a coordinate system where its origin is Origin,
+    /// and its main direction and X direction coordinates Y = 1.0, X = Z = 0.0
+    /// and X direction coordinates Z = 1.0, X = Y = 0.0.
+    fn zox() -> NAx2;
+
+    /// Identifies a coordinate system where its origin is Origin,
+    /// and its main direction and X direction coordinates X = 1.0, Z = Y = 0.0
+    /// and X direction coordinates Y = 1.0, X = Z = 0.0.
+    fn yoz() -> NAx2;
+
+    /// Identifies a Cartesian point with coordinates X = Y = 0.0 in 2D.
+    fn origin2d() -> NPnt2d;
+
+    /// Returns a unit vector with the combinations (1,0) in 2D.
+    fn dx2d() -> NDir2d;
+
+    /// Returns a unit vector with the combinations (0,1) in 2D.
+    fn dy2d() -> NDir2d;
+
+    /// Identifies an axis where its origin is Origin2d
+    /// and its unit vector coordinates are X = 1.0, Y = 0.0.
+    fn ox2d() -> NAx2d;
+
+    /// Identifies an axis where its origin is Origin2d
+    /// and its unit vector coordinates are Y = 1.0, X = 0.0.
+    fn oy2d() -> NAx2d;
 }
 
-/// Represents a 3D point with double-precision coordinates.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NPnt {
-    coord: NXYZ,
-}
+/// Geometric processor struct, providing access to standard geometric entities.
+#[derive(Clone, Copy, Debug)]
+pub struct NGP;
 
-impl NPnt {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        NPnt {
-            coord: NXYZ::new(x, y, z),
-        }
+impl GP for NGP {
+    fn resolution() -> f64 {
+        f64::EPSILON
     }
 
-    pub fn x(&self) -> f64 {
-        self.coord.x()
+    fn origin() -> NPnt {
+        NPnt::new_with_coords(0.0, 0.0, 0.0)
     }
 
-    pub fn y(&self) -> f64 {
-        self.coord.y()
+    fn dx() -> NDir {
+        NDir::new(1.0, 0.0, 0.0).unwrap()
     }
 
-    pub fn z(&self) -> f64 {
-        self.coord.z()
+    fn dy() -> NDir {
+        NDir::new(0.0, 1.0, 0.0).unwrap()
     }
 
-    pub fn coords(&self) -> (f64, f64, f64) {
-        (self.x(), self.y(), self.z())
+    fn dz() -> NDir {
+        NDir::new(0.0, 0.0, 1.0).unwrap()
     }
 
-    pub fn xyz(&self) -> NXYZ {
-        self.coord.clone()
+    fn ox() -> NAx1 {
+        NAx1::new(NGP::origin(), NGP::dx())
     }
 
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        writeln!(
-            out,
-            "{} {{ \"type\": \"NPnt\", \"coordinates\": [{}, {}, {}] }}",
-            indent,
-            self.x(),
-            self.y(),
-            self.z()
-        ).unwrap();
+    fn oy() -> NAx1 {
+        NAx1::new(NGP::origin(), NGP::dy())
     }
 
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"coordinates\": [";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut coords = [0.0; 3];
-            let mut num_str = String::new();
-            let mut idx = 0;
-            while idx < 3 {
-                let c = json.chars().nth(*pos).unwrap();
-                if c.is_digit(10) || c == '.' || c == '-' {
-                    num_str.push(c);
-                } else if c == ',' || c == ']' {
-                    if !num_str.is_empty() {
-                        coords[idx] = num_str.parse().unwrap_or(0.0);
-                        idx += 1;
-                        num_str.clear();
-                    }
-                }
-                *pos += 1;
-                if c == ']' {
-                    break;
-                }
-            }
-            if idx == 3 {
-                self.coord = NXYZ::new(coords[0], coords[1], coords[2]);
-                return true;
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 3D direction (unit vector) with double-precision coordinates.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NDir {
-    coord: NXYZ,
-}
-
-impl NDir {
-    pub fn new(x: f64, y: f64, z: f64) -> Result<Self, NatureError> {
-        let mag = (x * x + y * y + z * z).sqrt();
-        raise_vector_with_null_magnitude_if!(
-            mag <= gp::resolution(),
-            "Direction cannot have zero magnitude"
-        );
-        Ok(NDir {
-            coord: NXYZ::new(x / mag, y / mag, z / mag),
-        })
+    fn oz() -> NAx1 {
+        NAx1::new(NGP::origin(), NGP::dz())
     }
 
-    pub fn x(&self) -> f64 {
-        self.coord.x()
+    fn xoy() -> NAx2 {
+        NAx2::new(NGP::origin(), NGP::dz(), NGP::dx()).unwrap()
     }
 
-    pub fn y(&self) -> f64 {
-        self.coord.y()
+    fn zox() -> NAx2 {
+        NAx2::new(NGP::origin(), NGP::dy(), NGP::dz()).unwrap()
     }
 
-    pub fn z(&self) -> f64 {
-        self.coord.z()
+    fn yoz() -> NAx2 {
+        NAx2::new(NGP::origin(), NGP::dx(), NGP::dy()).unwrap()
     }
 
-    pub fn xyz(&self) -> NXYZ {
-        self.coord.clone()
+    fn origin2d() -> NPnt2d {
+        NPnt2d::new_with_coords(0.0, 0.0)
     }
 
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        writeln!(
-            out,
-            "{} {{ \"type\": \"NDir\", \"coordinates\": [{}, {}, {}] }}",
-            indent,
-            self.x(),
-            self.y(),
-            self.z()
-        ).unwrap();
+    fn dx2d() -> NDir2d {
+        NDir2d::new(1.0, 0.0).unwrap()
     }
 
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"coordinates\": [";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut coords = [0.0; 3];
-            let mut num_str = String::new();
-            let mut idx = 0;
-            while idx < 3 {
-                let c = json.chars().nth(*pos).unwrap();
-                if c.is_digit(10) || c == '.' || c == '-' {
-                    num_str.push(c);
-                } else if c == ',' || c == ']' {
-                    if !num_str.is_empty() {
-                        coords[idx] = num_str.parse().unwrap_or(0.0);
-                        idx += 1;
-                        num_str.clear();
-                    }
-                }
-                *pos += 1;
-                if c == ']' {
-                    break;
-                }
-            }
-            if idx == 3 {
-                match NDir::new(coords[0], coords[1], coords[2]) {
-                    Ok(dir) => {
-                        self.coord = dir.coord;
-                        return true;
-                    }
-                    Err(_) => return false,
-                }
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 3D axis with a point and direction.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NAx1 {
-    location: NPnt,
-    direction: NDir,
-}
-
-impl NAx1 {
-    pub fn new(location: NPnt, direction: NDir) -> Self {
-        NAx1 { location, direction }
+    fn dy2d() -> NDir2d {
+        NDir2d::new(0.0, 1.0).unwrap()
     }
 
-    pub fn location(&self) -> &NPnt {
-        &self.location
+    fn ox2d() -> NAx2d {
+        NAx2d::new(NGP::origin2d(), NGP::dx2d())
     }
 
-    pub fn direction(&self) -> &NDir {
-        &self.direction
+    fn oy2d() -> NAx2d {
+        NAx2d::new(NGP::origin2d(), NGP::dy2d())
     }
-
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        write!(out, "{} {{ \"type\": \"NAx1\", \"location\": ", indent).unwrap();
-        self.location.dump_json(out, depth + 1);
-        write!(out, ", \"direction\": ").unwrap();
-        self.direction.dump_json(out, depth + 1);
-        writeln!(out, "{}}}", indent).unwrap();
-    }
-
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"type\": \"NAx1\"";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut location = NPnt::new(0.0, 0.0, 0.0);
-            let mut direction = NDir::new(1.0, 0.0, 0.0).unwrap();
-            if location.init_from_json(json, pos) && direction.init_from_json(json, pos) {
-                self.location = location;
-                self.direction = direction;
-                return true;
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 3D coordinate system with a point, main direction, and X direction.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NAx2 {
-    location: NPnt,
-    direction: NDir,
-    x_direction: NDir,
-}
-
-impl NAx2 {
-    pub fn new(location: NPnt, direction: NDir, x_direction: NDir) -> Result<Self, NatureError> {
-        // Ensure direction and x_direction are not parallel
-        let dot = direction.xyz().dot(&x_direction.xyz());
-        if dot.abs() > 1.0 - gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
-        }
-        Ok(NAx2 {
-            location,
-            direction,
-            x_direction,
-        })
-    }
-
-    pub fn location(&self) -> &NPnt {
-        &self.location
-    }
-
-    pub fn direction(&self) -> &NDir {
-        &self.direction
-    }
-
-    pub fn x_direction(&self) -> &NDir {
-        &self.x_direction
-    }
-
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        write!(out, "{} {{ \"type\": \"NAx2\", \"location\": ", indent).unwrap();
-        self.location.dump_json(out, depth + 1);
-        write!(out, ", \"direction\": ").unwrap();
-        self.direction.dump_json(out, depth + 1);
-        write!(out, ", \"x_direction\": ").unwrap();
-        self.x_direction.dump_json(out, depth + 1);
-        writeln!(out, "{}}}", indent).unwrap();
-    }
-
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"type\": \"NAx2\"";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut location = NPnt::new(0.0, 0.0, 0.0);
-            let mut direction = NDir::new(1.0, 0.0, 0.0).unwrap();
-            let mut x_direction = NDir::new(0.0, 1.0, 0.0).unwrap();
-            if location.init_from_json(json, pos)
-                && direction.init_from_json(json, pos)
-                && x_direction.init_from_json(json, pos)
-            {
-                match NAx2::new(location, direction, x_direction) {
-                    Ok(ax2) => {
-                        self.location = ax2.location;
-                        self.direction = ax2.direction;
-                        self.x_direction = ax2.x_direction;
-                        return true;
-                    }
-                    Err(_) => return false,
-                }
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 2D point with double-precision coordinates.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NPnt2d {
-    coord: NXY,
-}
-
-impl NPnt2d {
-    pub fn new(x: f64, y: f64) -> Self {
-        NPnt2d {
-            coord: NXY::new(x, y),
-        }
-    }
-
-    pub fn x(&self) -> f64 {
-        self.coord.x()
-    }
-
-    pub fn y(&self) -> f64 {
-        self.coord.y()
-    }
-
-    pub fn coords(&self) -> (f64, f64) {
-        (self.x(), self.y())
-    }
-
-    pub fn xy(&self) -> NXY {
-        self.coord.clone()
-    }
-
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        writeln!(
-            out,
-            "{} {{ \"type\": \"NPnt2d\", \"coordinates\": [{}, {}] }}",
-            indent,
-            self.x(),
-            self.y()
-        ).unwrap();
-    }
-
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"coordinates\": [";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut coords = [0.0; 2];
-            let mut num_str = String::new();
-            let mut idx = 0;
-            while idx < 2 {
-                let c = json.chars().nth(*pos).unwrap();
-                if c.is_digit(10) || c == '.' || c == '-' {
-                    num_str.push(c);
-                } else if c == ',' || c == ']' {
-                    if !num_str.is_empty() {
-                        coords[idx] = num_str.parse().unwrap_or(0.0);
-                        idx += 1;
-                        num_str.clear();
-                    }
-                }
-                *pos += 1;
-                if c == ']' {
-                    break;
-                }
-            }
-            if idx == 2 {
-                self.coord = NXY::new(coords[0], coords[1]);
-                return true;
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 2D direction (unit vector) with double-precision coordinates.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NDir2d {
-    coord: NXY,
-}
-
-impl NDir2d {
-    pub fn new(x: f64, y: f64) -> Result<Self, NatureError> {
-        let mag = (x * x + y * y).sqrt();
-        raise_vector_with_null_magnitude_if!(
-            mag <= gp::resolution(),
-            "Direction cannot have zero magnitude"
-        );
-        Ok(NDir2d {
-            coord: NXY::new(x / mag, y / mag),
-        })
-    }
-
-    pub fn x(&self) -> f64 {
-        self.coord.x()
-    }
-
-    pub fn y(&self) -> f64 {
-        self.coord.y()
-    }
-
-    pub fn xy(&self) -> NXY {
-        self.coord.clone()
-    }
-
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        writeln!(
-            out,
-            "{} {{ \"type\": \"NDir2d\", \"coordinates\": [{}, {}] }}",
-            indent,
-            self.x(),
-            self.y()
-        ).unwrap();
-    }
-
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"coordinates\": [";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut coords = [0.0; 2];
-            let mut num_str = String::new();
-            let mut idx = 0;
-            while idx < 2 {
-                let c = json.chars().nth(*pos).unwrap();
-                if c.is_digit(10) || c == '.' || c == '-' {
-                    num_str.push(c);
-                } else if c == ',' || c == ']' {
-                    if !num_str.is_empty() {
-                        coords[idx] = num_str.parse().unwrap_or(0.0);
-                        idx += 1;
-                        num_str.clear();
-                    }
-                }
-                *pos += 1;
-                if c == ']' {
-                    break;
-                }
-            }
-            if idx == 2 {
-                match NDir2d::new(coords[0], coords[1]) {
-                    Ok(dir) => {
-                        self.coord = dir.coord;
-                        return true;
-                    }
-                    Err(_) => return false,
-                }
-            }
-        }
-        false
-    }
-}
-
-/// Represents a 2D axis with a point and direction.
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NAx2d {
-    location: NPnt2d,
-    direction: NDir2d,
-}
-
-impl NAx2d {
-    pub fn new(location: NPnt2d, direction: NDir2d) -> Self {
-        NAx2d { location, direction }
-    }
-
-    pub fn location(&self) -> &NPnt2d {
-        &self.location
-    }
-
-    pub fn direction(&self) -> &NDir2d {
-        &self.direction
-    }
-
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
-        let indent = " ".repeat((depth * 2) as usize);
-        write!(out, "{} {{ \"type\": \"NAx2d\", \"location\": ", indent).unwrap();
-        self.location.dump_json(out, depth + 1);
-        write!(out, ", \"direction\": ").unwrap();
-        self.direction.dump_json(out, depth + 1);
-        writeln!(out, "{}}}", indent).unwrap();
-    }
-
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
-        let search = "\"type\": \"NAx2d\"";
-        if let Some(start) = json[*pos..].find(search) {
-            *pos += start + search.len();
-            let mut location = NPnt2d::new(0.0, 0.0);
-            let mut direction = NDir2d::new(1.0, 0.0).unwrap();
-            if location.init_from_json(json, pos) && direction.init_from_json(json, pos) {
-                self.location = location;
-                self.direction = direction;
-                return true;
-            }
-        }
-        false
-    }
-}
-
-lazy_static! {
-    /// Cartesian point at (0, 0, 0).
-    pub static ref ORIGIN: NPnt = NPnt::new(0.0, 0.0, 0.0);
-
-    /// Unit vector (1, 0, 0).
-    pub static ref DX: NDir = NDir::new(1.0, 0.0, 0.0).unwrap();
-
-    /// Unit vector (0, 1, 0).
-    pub static ref DY: NDir = NDir::new(0.0, 1.0, 0.0).unwrap();
-
-    /// Unit vector (0, 0, 1).
-    pub static ref DZ: NDir = NDir::new(0.0, 0.0, 1.0).unwrap();
-
-    /// Axis at origin with direction (1, 0, 0).
-    pub static ref OX: NAx1 = NAx1::new(ORIGIN.clone(), DX.clone());
-
-    /// Axis at origin with direction (0, 1, 0).
-    pub static ref OY: NAx1 = NAx1::new(ORIGIN.clone(), DY.clone());
-
-    /// Axis at origin with direction (0, 0, 1).
-    pub static ref OZ: NAx1 = NAx1::new(ORIGIN.clone(), DZ.clone());
-
-    /// Coordinate system at origin with main direction (0, 0, 1) and X direction (1, 0, 0).
-    pub static ref XOY: NAx2 = NAx2::new(ORIGIN.clone(), DZ.clone(), DX.clone()).unwrap();
-
-    /// Coordinate system at origin with main direction (0, 1, 0) and X direction (0, 0, 1).
-    pub static ref ZOX: NAx2 = NAx2::new(ORIGIN.clone(), DY.clone(), DZ.clone()).unwrap();
-
-    /// Coordinate system at origin with main direction (1, 0, 0) and X direction (0, 1, 0).
-    pub static ref YOZ: NAx2 = NAx2::new(ORIGIN.clone(), DX.clone(), DY.clone()).unwrap();
-
-    /// Cartesian point at (0, 0) in 2D.
-    pub static ref ORIGIN2D: NPnt2d = NPnt2d::new(0.0, 0.0);
-
-    /// Unit vector (1, 0) in 2D.
-    pub static ref DX2D: NDir2d = NDir2d::new(1.0, 0.0).unwrap();
-
-    /// Unit vector (0, 1) in 2D.
-    pub static ref DY2D: NDir2d = NDir2d::new(0.0, 1.0).unwrap();
-
-    /// Axis at origin with direction (1, 0) in 2D.
-    pub static ref OX2D: NAx2d = NAx2d::new(ORIGIN2D.clone(), DX2D.clone());
-
-    /// Axis at origin with direction (0, 1) in 2D.
-    pub static ref OY2D: NAx2d = NAx2d::new(ORIGIN2D.clone(), DY2D.clone());
 }
 
 #[cfg(test)]
@@ -540,72 +142,91 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_resolution() {
+        assert_eq!(NGP::resolution(), f64::EPSILON);
+    }
+
+    #[test]
     fn test_origin() {
-        assert_eq!(ORIGIN.coords(), (0.0, 0.0, 0.0));
+        assert_eq!(NGP::origin(), NPnt::new_with_coords(0.0, 0.0, 0.0));
     }
 
     #[test]
     fn test_dx() {
-        assert_eq!(DX.xyz().coords(), (1.0, 0.0, 0.0));
+        assert_eq!(NGP::dx(), NDir::new(1.0, 0.0, 0.0).unwrap());
+    }
+
+    #[test]
+    fn test_dy() {
+        assert_eq!(NGP::dy(), NDir::new(0.0, 1.0, 0.0).unwrap());
+    }
+
+    #[test]
+    fn test_dz() {
+        assert_eq!(NGP::dz(), NDir::new(0.0, 0.0, 1.0).unwrap());
     }
 
     #[test]
     fn test_ox() {
-        assert_eq!(OX.location().coords(), (0.0, 0.0, 0.0));
-        assert_eq!(OX.direction().xyz().coords(), (1.0, 0.0, 0.0));
+        assert_eq!(NGP::ox(), NAx1::new(NGP::origin(), NGP::dx()));
+    }
+
+    #[test]
+    fn test_oy() {
+        assert_eq!(NGP::oy(), NAx1::new(NGP::origin(), NGP::dy()));
+    }
+
+    #[test]
+    fn test_oz() {
+        assert_eq!(NGP::oz(), NAx1::new(NGP::origin(), NGP::dz()));
     }
 
     #[test]
     fn test_xoy() {
-        assert_eq!(XOY.location().coords(), (0.0, 0.0, 0.0));
-        assert_eq!(XOY.direction().xyz().coords(), (0.0, 0.0, 1.0));
-        assert_eq!(XOY.x_direction().xyz().coords(), (1.0, 0.0, 0.0));
+        assert_eq!(
+            NGP::xoy(),
+            NAx2::new(NGP::origin(), NGP::dz(), NGP::dx()).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_zox() {
+        assert_eq!(
+            NGP::zox(),
+            NAx2::new(NGP::origin(), NGP::dy(), NGP::dz()).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_yoz() {
+        assert_eq!(
+            NGP::yoz(),
+            NAx2::new(NGP::origin(), NGP::dx(), NGP::dy()).unwrap()
+        );
     }
 
     #[test]
     fn test_origin2d() {
-        assert_eq!(ORIGIN2D.coords(), (0.0, 0.0));
+        assert_eq!(NGP::origin2d(), NPnt2d::new_with_coords(0.0, 0.0));
     }
 
     #[test]
     fn test_dx2d() {
-        assert_eq!(DX2D.xy().coords(), (1.0, 0.0));
+        assert_eq!(NGP::dx2d(), NDir2d::new(1.0, 0.0).unwrap());
+    }
+
+    #[test]
+    fn test_dy2d() {
+        assert_eq!(NGP::dy2d(), NDir2d::new(0.0, 1.0).unwrap());
     }
 
     #[test]
     fn test_ox2d() {
-        assert_eq!(OX2D.location().coords(), (0.0, 0.0));
-        assert_eq!(OX2D.direction().xy().coords(), (1.0, 0.0));
+        assert_eq!(NGP::ox2d(), NAx2d::new(NGP::origin2d(), NGP::dx2d()));
     }
 
     #[test]
-    fn test_json_serialization() {
-        let mut output = Vec::new();
-        ORIGIN.dump_json(&mut output, 0);
-        let json = String::from_utf8(output).unwrap();
-        assert!(json.contains("\"coordinates\": [0, 0, 0]"));
-
-        let mut p = NPnt::new(0.0, 0.0, 0.0);
-        let mut pos = 0;
-        assert!(p.init_from_json(&json, &mut pos));
-        assert_eq!(p.coords(), (0.0, 0.0, 0.0));
-    }
-
-    #[test]
-    fn test_ndir_invalid() {
-        assert!(matches!(
-            NDir::new(0.0, 0.0, 0.0),
-            Err(NatureError::VectorWithNullMagnitude(_))
-        ));
-    }
-
-    #[test]
-    fn test_nax2_invalid() {
-        let p = NPnt::new(0.0, 0.0, 0.0);
-        let d = NDir::new(1.0, 0.0, 0.0).unwrap();
-        assert!(matches!(
-            NAx2::new(p.clone(), d.clone(), d),
-            Err(NatureError::InvalidConstructionParameters)
-        ));
+    fn test_oy2d() {
+        assert_eq!(NGP::oy2d(), NAx2d::new(NGP::origin2d(), NGP::dy2d()));
     }
 }

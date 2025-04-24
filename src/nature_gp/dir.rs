@@ -7,6 +7,10 @@ use crate::{
     nature_errors::NErrors,
 };
 
+use super::
+    xyz::{NXYZ, XYZ}
+;
+
 // Trait to define the behavior of a unit vector (direction) in 3D space
 pub trait Dir {
     fn new(x: f64, y: f64, z: f64) -> Result<Self, NErrors>
@@ -61,20 +65,20 @@ pub trait Dir {
 }
 
 // Struct representing a unit vector (direction) in 3D space
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Default, Debug, Serialize, Deserialize)]
 pub struct NDir {
     coord: NXYZ,
 }
 
 impl Dir for NDir {
     fn new(x: f64, y: f64, z: f64) -> Result<Self, NErrors> {
-        let norm = (x * x + y * y + z * z).sqrt();
-        if norm <= crate::gp::NGP::resolution() {
-            return Err(NErrors::ZeroNorm);
+        let mut xyz = NXYZ::new(x, y, z);
+
+        if let Err(error) = xyz.normalize() {
+            Err(error)
+        } else {
+            Ok(NDir { coord: xyz })
         }
-        Ok(NDir {
-            coord: NXYZ::new(x / norm, y / norm, z / norm),
-        })
     }
 
     fn from_vec(vec: &NVec) -> Result<Self, NErrors> {

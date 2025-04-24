@@ -1,8 +1,10 @@
 use std::fmt::Debug;
 
+use serde::{Deserialize, Serialize};
+
 use crate::nature_errors::NErrors;
 
-use super::gp::{GP, NGP};
+use super::gp::{GP , NGP};
 
 pub trait XYZ
 where
@@ -71,6 +73,7 @@ where
     fn is_equal(&self, other: &Self, tolerance: f64) -> bool;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct NXYZ {
     x: f64,
     y: f64,
