@@ -55,7 +55,7 @@ pub trait Trsf {
 }
 
 // Struct representing a 3D transformation
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Default)]
 pub struct NTrsf {
     scale: f64,
     shape: NTrsfForm,

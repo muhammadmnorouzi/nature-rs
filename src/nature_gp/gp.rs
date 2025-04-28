@@ -7,14 +7,14 @@ use super::{
     dir::{Dir, NDir},
     dir2d::{Dir2d, NDir2d},
     point2d::{NPnt2d, Pnt2d},
-    point3d::{NPnt, Pnt},
+    point3d::{NPoint3d, Point3d},
 };
 
 pub trait GP {
     fn resolution() -> f64;
 
     /// Identifies a Cartesian point with coordinates X = Y = Z = 0.0.
-    fn origin() -> NPnt;
+    fn origin() -> NPoint3d;
 
     /// Returns a unit vector with the combination (1,0,0).
     fn dx() -> NDir;
@@ -76,8 +76,8 @@ impl GP for NGP {
         f64::EPSILON
     }
 
-    fn origin() -> NPnt {
-        NPnt::new_with_coords(0.0, 0.0, 0.0)
+    fn origin() -> NPoint3d {
+        NPoint3d::new(0.0, 0.0, 0.0)
     }
 
     fn dx() -> NDir {
@@ -148,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_origin() {
-        assert_eq!(NGP::origin(), NPnt::new_with_coords(0.0, 0.0, 0.0));
+        assert_eq!(NGP::origin(), NPoint3d::new(0.0, 0.0, 0.0));
     }
 
     #[test]

@@ -1,24 +1,25 @@
-use std::io::Write;
-
 use serde::{Deserialize, Serialize};
+use std::{fmt::Debug, io::Write};
 
-use crate::{
-    gp::{NAx1, NAx2, NTrsf, NVec, NXYZ},
-    nature_errors::NErrors,
+use super::{
+    ax1::NAx1, ax2::NAx2, trsf::{NTrsf, Trsf}, trsf_form::NTrsfForm, vec::NVec, xyz::{NXYZ, XYZ}
 };
 
+use crate::nature_errors::NErrors;
+
 // Trait to define the behavior of a 3D Cartesian point
-pub trait Pnt {
-    fn new() -> Self;
-    fn new_with_xyz(coord: &NXYZ) -> Self;
-    fn new_with_coords(x: f64, y: f64, z: f64) -> Self;
-    fn set_coord(&mut self, index: i32, xi: f64) -> Result<(), NErrors>;
+pub trait Point3d
+where
+    Self: Default + Clone + PartialEq + Eq + From<f64> + Debug,
+{
+    fn new(x: f64, y: f64, z: f64) -> Self;
+    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors>;
     fn set_coords(&mut self, x: f64, y: f64, z: f64);
     fn set_x(&mut self, x: f64);
     fn set_y(&mut self, y: f64);
     fn set_z(&mut self, z: f64);
     fn set_xyz(&mut self, coord: &NXYZ);
-    fn coord(&self, index: i32) -> Result<f64, NErrors>;
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors>;
     fn coords(&self) -> (f64, f64, f64);
     fn x(&self) -> f64;
     fn y(&self) -> f64;
@@ -56,51 +57,43 @@ pub trait Pnt {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &Self, p2: &Self);
-    fn translated_pnts(&self, p1: &Self, p2: &Self) -> Self
+    fn translate_point3d(&mut self, p1: &Self, p2: &Self);
+    fn translated_point3d(&self, p1: &Self, p2: &Self) -> Self
     where
         Self: Sized;
-    fn dump_json(&self, out: &mut dyn Write, depth: i32);
-    // Note: InitFromJson is not included as it requires stream parsing, which is less idiomatic in Rust
+    fn dump_json(&self, out: &mut dyn Write, depth: usize);
 }
 
-// Struct representing a 3D Cartesian point
 #[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
-pub struct NPnt {
+pub struct NPoint3d {
     coord: NXYZ,
 }
 
-impl Pnt for NPnt {
-    /// Creates a point with zero coordinates.
-    fn new() -> Self {
-        NPnt {
-            coord: NXYZ::new(0.0, 0.0, 0.0),
+impl Eq for NPoint3d {}
+
+impl From<f64> for NPoint3d {
+    fn from(value: f64) -> Self {
+        Self::new(value, value, value)
+    }
+}
+
+impl From<(f64, f64, f64)> for NPoint3d {
+    fn from(value: (f64, f64, f64)) -> Self {
+        Self::new(value.0, value.1 , value.2)
+    }
+}
+
+impl From<&NXYZ> for NPoint3d {
+    fn from(value: &NXYZ) -> Self {
+        Self {
+            coord : value.clone()
         }
     }
+}
 
-    /// Creates a point from an XYZ object.
-    fn new_with_xyz(coord: &NXYZ) -> Self {
-        NPnt {
-            coord: coord.clone(),
-        }
-    }
-
-    /// Creates a point with its 3 Cartesian coordinates.
-    fn new_with_coords(x: f64, y: f64, z: f64) -> Self {
-        NPnt {
-            coord: NXYZ::new(x, y, z),
-        }
-    }
-
-    /// Changes the coordinate at the given index (1=X, 2=Y, 3=Z).
-    fn set_coord(&mut self, index: i32, xi: f64) -> Result<(), NErrors> {
-        match index {
-            1 => self.coord.set_x(xi),
-            2 => self.coord.set_y(xi),
-            3 => self.coord.set_z(xi),
-            _ => return Err(NErrors::OutOfRange),
-        }
-        Ok(())
+impl Point3d for NPoint3d {
+    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors> {
+        self.coord.set_coord_by_index(index, scalar)
     }
 
     /// Assigns the given values to the coordinates.
@@ -129,13 +122,8 @@ impl Pnt for NPnt {
     }
 
     /// Returns the coordinate at the given index (1=X, 2=Y, 3=Z).
-    fn coord(&self, index: i32) -> Result<f64, NErrors> {
-        match index {
-            1 => Ok(self.coord.x()),
-            2 => Ok(self.coord.y()),
-            3 => Ok(self.coord.z()),
-            _ => Err(NErrors::OutOfRange),
-        }
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors> {
+        self.coord.coord_by_index(index)
     }
 
     /// Returns the three coordinates as a tuple.
@@ -166,7 +154,7 @@ impl Pnt for NPnt {
     /// Assigns the result of (alpha*this + beta*other)/(alpha + beta) to this point.
     fn bary_center(&mut self, alpha: f64, other: &Self, beta: f64) {
         let mut new_coord = NXYZ::new(0.0, 0.0, 0.0);
-        new_coord.set_linear_form(alpha, &self.coord, beta, &other.coord);
+        new_coord.set_linear_form22(alpha, &self.coord, beta, &other.coord);
         new_coord.divide(alpha + beta);
         self.coord = new_coord;
     }
@@ -178,10 +166,7 @@ impl Pnt for NPnt {
 
     /// Computes the Euclidean distance to another point.
     fn distance(&self, other: &Self) -> f64 {
-        let dx = self.coord.x() - other.coord.x();
-        let dy = self.coord.y() - other.coord.y();
-        let dz = self.coord.z() - other.coord.z();
-        (dx * dx + dy * dy + dz * dz).sqrt()
+        f64::sqrt(self.square_distance(other))
     }
 
     /// Computes the square of the Euclidean distance to another point.
@@ -189,7 +174,7 @@ impl Pnt for NPnt {
         let dx = self.coord.x() - other.coord.x();
         let dy = self.coord.y() - other.coord.y();
         let dz = self.coord.z() - other.coord.z();
-        dx * dx + dy * dy + dz * dz
+        (dx.powi(2) + dy.powi(2) + dz.powi(2)).sqrt()
     }
 
     /// Mirrors the point with respect to another point.
@@ -211,7 +196,7 @@ impl Pnt for NPnt {
     fn mirror_ax1(&mut self, a1: &NAx1) {
         let mut t = NTrsf::new();
         t.set_mirror_ax1(a1);
-        t.transforms(&mut self.coord);
+        t.transforms_xyz(&mut self.coord);
     }
 
     /// Returns the point mirrored with respect to an axis.
@@ -225,7 +210,7 @@ impl Pnt for NPnt {
     fn mirror_ax2(&mut self, a2: &NAx2) {
         let mut t = NTrsf::new();
         t.set_mirror_ax2(a2);
-        t.transforms(&mut self.coord);
+        t.transforms_xyz(&mut self.coord);
     }
 
     /// Returns the point mirrored with respect to a plane defined by Ax2.
@@ -237,9 +222,9 @@ impl Pnt for NPnt {
 
     /// Rotates the point around an axis by an angle.
     fn rotate(&mut self, a1: &NAx1, ang: f64) {
-        let mut t = NTrsf::new();
-        t.set_rotation(a1, ang);
-        t.transforms(&mut self.coord);
+        let mut t = NTrsf::default();
+        t.set_rotation_ax1(a1, ang);
+        t.transforms_xyz(&mut self.coord);
     }
 
     /// Returns the point rotated around an axis by an angle.
@@ -250,10 +235,10 @@ impl Pnt for NPnt {
     }
 
     /// Scales the point with respect to another point.
-    fn scale(&mut self, p: &Self, s: f64) {
+    fn scale(&mut self, p: &Self, scalar: f64) {
         let mut p_coord = p.coord.clone();
-        p_coord.multiply(1.0 - s);
-        self.coord.multiply(s);
+        p_coord.multiply(1.0 - scalar);
+        self.coord.multiply(scalar);
         self.coord.add(&p_coord);
     }
 
@@ -280,7 +265,7 @@ impl Pnt for NPnt {
                 self.coord.add(&t.translation_part());
             }
             _ => {
-                t.transforms(&mut self.coord);
+                t.transforms_xyz(&mut self.coord);
             }
         }
     }
@@ -305,20 +290,20 @@ impl Pnt for NPnt {
     }
 
     /// Translates the point from one point to another.
-    fn translate_pnts(&mut self, p1: &Self, p2: &Self) {
+    fn translate_point3d(&mut self, p1: &Self, p2: &Self) {
         self.coord.add(&p2.coord);
         self.coord.subtract(&p1.coord);
     }
 
     /// Returns the point translated from one point to another.
-    fn translated_pnts(&self, p1: &Self, p2: &Self) -> Self {
+    fn translated_point3d(&self, p1: &Self, p2: &Self) -> Self {
         let mut res = self.clone();
-        res.translate_pnts(p1, p2);
+        res.translate_point3d(p1, p2);
         res
     }
 
     /// Dumps the point as JSON.
-    fn dump_json(&self, out: &mut dyn Write, depth: i32) {
+    fn dump_json(&self, out: &mut dyn Write, depth: usize) {
         let indent = " ".repeat((depth * 2) as usize);
         writeln!(out, "{} {{", indent).unwrap();
         writeln!(out, "{}   \"type\": \"NPnt\",", indent).unwrap();
@@ -333,10 +318,16 @@ impl Pnt for NPnt {
         .unwrap();
         writeln!(out, "{} }}", indent).unwrap();
     }
+    
+    fn new(x: f64, y: f64, z: f64) -> Self {
+        Self {
+            coord : NXYZ::new(x, y, z)
+        }
+    }
 }
 
 // Implement std::hash::Hash for NPnt
-impl std::hash::Hash for NPnt {
+impl std::hash::Hash for NPoint3d {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         let x_bits = self.x().to_bits();
         let y_bits = self.y().to_bits();
@@ -350,19 +341,19 @@ impl std::hash::Hash for NPnt {
 mod tests {
     use super::*;
 
-    fn create_test_point() -> NPnt {
-        NPnt::new_with_coords(1.0, 2.0, 3.0)
+    fn create_test_point() -> NPoint3d {
+        NPoint3d::new(1.0, 2.0, 3.0)
     }
 
     #[test]
     fn test_new() {
-        let p = NPnt::new();
+        let p = NPoint3d::default();
         assert_eq!(p.coords(), (0.0, 0.0, 0.0));
     }
 
     #[test]
     fn test_new_with_coords() {
-        let p = NPnt::new_with_coords(1.0, 2.0, 3.0);
+        let p = NPoint3d::new(1.0, 2.0, 3.0);
         assert_eq!(p.x(), 1.0);
         assert_eq!(p.y(), 2.0);
         assert_eq!(p.z(), 3.0);
@@ -371,39 +362,42 @@ mod tests {
     #[test]
     fn test_set_coord() {
         let mut p = create_test_point();
-        p.set_coord(1, 4.0).unwrap();
+        p.set_coord_by_index(1, 4.0).unwrap();
         assert_eq!(p.x(), 4.0);
-        assert!(matches!(p.set_coord(4, 5.0), Err(NErrors::OutOfRange)));
+        assert!(matches!(
+            p.set_coord_by_index(4, 5.0),
+            Err(NErrors::IndexOutOfRange)
+        ));
     }
 
     #[test]
     fn test_coords() {
         let p = create_test_point();
         assert_eq!(p.coords(), (1.0, 2.0, 3.0));
-        assert_eq!(p.coord(1).unwrap(), 1.0);
-        assert!(matches!(p.coord(4), Err(NErrors::OutOfRange)));
+        assert_eq!(p.coord_by_index(1).unwrap(), 1.0);
+        assert!(matches!(p.coord_by_index(4), Err(NErrors::IndexOutOfRange)));
     }
 
     #[test]
     fn test_distance() {
-        let p1 = NPnt::new_with_coords(0.0, 0.0, 0.0);
-        let p2 = NPnt::new_with_coords(3.0, 4.0, 0.0);
+        let p1 = NPoint3d::new(0.0, 0.0, 0.0);
+        let p2 = NPoint3d::new(3.0, 4.0, 0.0);
         assert!((p1.distance(&p2) - 5.0).abs() < 1e-9);
         assert!((p1.square_distance(&p2) - 25.0).abs() < 1e-9);
     }
 
     #[test]
     fn test_is_equal() {
-        let p1 = NPnt::new_with_coords(1.0, 2.0, 3.0);
-        let p2 = NPnt::new_with_coords(1.0 + 1e-6, 2.0, 3.0);
+        let p1 = NPoint3d::new(1.0, 2.0, 3.0);
+        let p2 = NPoint3d::new(1.0 + 1e-6, 2.0, 3.0);
         assert!(p1.is_equal(&p2, 1e-5));
         assert!(!p1.is_equal(&p2, 1e-7));
     }
 
     #[test]
     fn test_bary_center() {
-        let mut p1 = NPnt::new_with_coords(1.0, 0.0, 0.0);
-        let p2 = NPnt::new_with_coords(0.0, 1.0, 0.0);
+        let mut p1 = NPoint3d::new(1.0, 0.0, 0.0);
+        let p2 = NPoint3d::new(0.0, 1.0, 0.0);
         p1.bary_center(1.0, &p2, 1.0);
         let (x, y, z) = p1.coords();
         assert!((x - 0.5).abs() < 1e-9);
@@ -413,24 +407,24 @@ mod tests {
 
     #[test]
     fn test_mirror_pnt() {
-        let mut p = NPnt::new_with_coords(1.0, 1.0, 1.0);
-        let center = NPnt::new_with_coords(0.0, 0.0, 0.0);
+        let mut p = NPoint3d::new(1.0, 1.0, 1.0);
+        let center = NPoint3d::new(0.0, 0.0, 0.0);
         p.mirror_pnt(&center);
         assert_eq!(p.coords(), (-1.0, -1.0, -1.0));
     }
 
     #[test]
     fn test_scale() {
-        let mut p = NPnt::new_with_coords(2.0, 2.0, 2.0);
-        let center = NPnt::new_with_coords(0.0, 0.0, 0.0);
+        let mut p = NPoint3d::new(2.0, 2.0, 2.0);
+        let center = NPoint3d::new(0.0, 0.0, 0.0);
         p.scale(&center, 2.0);
         assert_eq!(p.coords(), (4.0, 4.0, 4.0));
     }
 
     #[test]
     fn test_translate_vec() {
-        let mut p = NPnt::new_with_coords(1.0, 1.0, 1.0);
-        let v = NVec::new_with_xyz(&NXYZ::new(1.0, 2.0, 3.0));
+        let mut p = NPoint3d::new(1.0, 1.0, 1.0);
+        let v = NVec::new_from_coords(1.0, 2.0, 3.0);
         p.translate_vec(&v);
         assert_eq!(p.coords(), (2.0, 3.0, 4.0));
     }

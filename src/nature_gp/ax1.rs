@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::nature_gp::{NAx2, NDir, NGP, NPoint3d, NTrsf, NVec};
+use crate::nature_gp::{ax2::NAx2, dir::NDir, point3d::NPoint3d, trsf::NTrsf, vec::NVec};
 
 // Trait to define the behavior of an axis in 3D space
 pub trait Ax1 {

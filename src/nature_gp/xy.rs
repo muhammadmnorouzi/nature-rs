@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
 use crate::nature_errors::NErrors;
-
-use super::gp::{GP, NGP};
+use crate::nature_gp::gp::{GP, NGP};
 
 pub trait XY
 where
@@ -22,7 +21,7 @@ where
     fn added(&self, other: &Self) -> Self;
     fn coords(&self, x: &mut f64, y: &mut f64);
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors>;
-    fn coord_by_index(&mut self, index: usize) -> Result<f64, NErrors>;
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors>;
     fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<f64, NErrors>;
     fn new(x: f64, y: f64) -> Self;
     fn zero() -> Self;
@@ -171,7 +170,7 @@ impl XY for NXY {
         }
     }
 
-    fn coord_by_index(&mut self, index: usize) -> Result<f64, NErrors> {
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors> {
         match index {
             1 => Ok(self.x),
             2 => Ok(self.y),
@@ -424,7 +423,6 @@ mod tests_gp_xyz {
         let a = vec(1.0, 2.0);
         let b = vec(4.0, 5.0);
         let c = vec(7.0, 8.0);
-        let d = vec(1.0, 1.0);
 
         let mut target = NXY::zero();
 

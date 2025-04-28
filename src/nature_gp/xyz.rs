@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::nature_errors::NErrors;
 
-use super::gp::{GP , NGP};
+use super::gp::{GP, NGP};
 
 pub trait XYZ
 where
@@ -47,7 +47,7 @@ where
     fn added(&self, other: &Self) -> Self;
     fn coords(&self, x: &mut f64, y: &mut f64, z: &mut f64);
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors>;
-    fn coord_by_index(&mut self, index: usize) -> Result<f64, NErrors>;
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors>;
     fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors>;
     fn new(x: f64, y: f64, z: f64) -> Self;
     fn zero() -> Self;
@@ -282,7 +282,7 @@ impl XYZ for NXYZ {
         }
     }
 
-    fn coord_by_index(&mut self, index: usize) -> Result<f64, NErrors> {
+    fn coord_by_index(&self, index: usize) -> Result<f64, NErrors> {
         match index {
             1 => Ok(self.x),
             2 => Ok(self.y),
