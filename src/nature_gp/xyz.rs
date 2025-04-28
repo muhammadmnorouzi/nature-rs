@@ -45,7 +45,7 @@ where
     fn reversed(&mut self) -> Self;
     fn reverse(&mut self);
     fn added(&self, other: &Self) -> Self;
-    fn coords(&self, x: &mut f64, y: &mut f64, z: &mut f64);
+    fn coords(&self) -> (f64, f64, f64);
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors>;
     fn coord_by_index(&self, index: usize) -> Result<f64, NErrors>;
     fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors>;
@@ -267,10 +267,8 @@ impl XYZ for NXYZ {
         }
     }
 
-    fn coords(&self, x: &mut f64, y: &mut f64, z: &mut f64) {
-        *x = self.x;
-        *y = self.y;
-        *z = self.z;
+    fn coords(&self) -> (f64, f64, f64) {
+        (self.x(), self.y(), self.z())
     }
 
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors> {
@@ -652,8 +650,7 @@ mod tests_gp_xyz {
     #[test]
     fn test_coords() {
         let a = vec(1.1, 2.2, 3.3);
-        let (mut x, mut y, mut z) = (0.0, 0.0, 0.0);
-        a.coords(&mut x, &mut y, &mut z);
+        let (x, y, z) = a.coords();
         assert_eq!(vec(x, y, z), vec(1.1, 2.2, 3.3));
     }
 

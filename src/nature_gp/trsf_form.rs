@@ -11,7 +11,7 @@ pub enum NTrsfForm {
     /// Translation
     Translation = 2,
     /// Central symmetry
-    PntMirror = 3,
+    PointMirror = 3,
     /// Rotational symmetry
     Ax1Mirror = 4,
     /// Bilateral symmetry
