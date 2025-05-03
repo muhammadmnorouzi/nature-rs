@@ -1,7 +1,7 @@
 use std::fmt::Debug;
-
+use serde::{Deserialize, Serialize};
 use crate::nature_errors::NErrors;
-use crate::nature_gp::gp::{GP, NGP};
+use super::prelude::*;
 
 pub trait XY
 where
@@ -22,7 +22,7 @@ where
     fn coords(&self) -> (f64, f64);
     fn change_coord(&mut self, index: usize) -> Result<&mut f64, NErrors>;
     fn coord_by_index(&self, index: usize) -> Result<f64, NErrors>;
-    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<f64, NErrors>;
+    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors>;
     fn new(x: f64, y: f64) -> Self;
     fn zero() -> Self;
     fn multiply_xy(&mut self, other: &Self);
@@ -44,6 +44,7 @@ where
     fn is_equal(&self, other: &Self, tolerance: f64) -> bool;
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct NXY {
     x: f64,
     y: f64,
@@ -177,7 +178,7 @@ impl XY for NXY {
         }
     }
 
-    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<f64, NErrors> {
+    fn set_coord_by_index(&mut self, index: usize, scalar: f64) -> Result<(), NErrors> {
         if !(1..=2).contains(&index) {
             return Err(NErrors::IndexOutOfRange);
         }
@@ -188,7 +189,7 @@ impl XY for NXY {
             _ => (),
         }
 
-        Ok(scalar)
+        Ok(())
     }
 
     fn new(x: f64, y: f64) -> Self {

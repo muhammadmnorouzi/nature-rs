@@ -1,8 +1,6 @@
 use std::io::Write;
-
 use serde::{Deserialize, Serialize};
-
-use crate::gp::{NAx2d, NDir2d, NPnt2d, NTrsf2d, NXY, NatureError};
+use super::prelude::*;
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -16,37 +14,201 @@ pub struct NVec2d {
     coord: NXY,
 }
 
-impl NVec2d {
+pub trait Vec2d {
     /// Creates a zero vector.
-    pub fn new() -> Self {
+     fn new() -> Self;
+
+    /// Creates a unitary vector from a direction.
+     fn new_from_dir(dir: &NDir2d) -> Self;
+
+    /// Creates a vector with the given coordinates.
+     fn new_from_coords(x: f64, y: f64) -> Self;
+
+    /// Creates a vector from two points (P2 - P1).
+     fn new_from_points(p1: &NPnt2d, p2: &NPnt2d) -> Self;
+
+    /// Sets the coordinate at the given index (1=X, 2=Y).
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError>;
+
+    /// Sets all coordinates.
+     fn set_coords(&mut self, x: f64, y: f64);
+
+    /// Sets the X coordinate.
+     fn set_x(&mut self, x: f64);
+
+    /// Sets the Y coordinate.
+     fn set_y(&mut self, y: f64);
+
+    /// Sets the coordinates from an NXY.
+     fn set_xy(&mut self, xy: &NXY);
+
+    /// Gets the coordinate at the given index (1=X, 2=Y).
+     fn coord(&self, index: i32) -> Result<f64, NatureError>;
+
+    /// Gets all coordinates.
+     fn coords(&self) -> (f64, f64);
+
+    /// Gets the X coordinate.
+     fn x(&self) -> f64;
+
+    /// Gets the Y coordinate.
+     fn y(&self) -> f64;
+
+    /// Gets the coordinates as an NXY.
+     fn xy(&self) -> NXY;
+
+    /// Checks if two vectors are equal within tolerances.
+     fn is_equal(&self, other: &NVec2d, linear_tolerance: f64, angular_tolerance: f64) -> bool;
+
+    /// Checks if the vector is normal to another within angular tolerance.
+     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+
+    /// Checks if the vector is opposite to another within angular tolerance.
+     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+
+    /// Checks if the vector is parallel to another within angular tolerance.
+     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+
+    /// Computes the angle between two vectors (-PI to PI radians).
+     fn angle(&self, other: &NVec2d) -> Result<f64, NatureError>;
+
+    /// Computes the magnitude of the vector.
+     fn magnitude(&self) -> f64;
+
+    /// Computes the square magnitude of the vector.
+     fn square_magnitude(&self) -> f64;
+
+    /// Adds another vector to this one.
+     fn add(&mut self, other: &NVec2d);
+
+    /// Returns the sum of two vectors.
+     fn added(&self, other: &NVec2d) -> NVec2d;
+
+    /// Subtracts another vector from this one.
+     fn subtract(&mut self, other: &NVec2d);
+
+    /// Returns the difference of two vectors.
+     fn subtracted(&self, other: &NVec2d) -> NVec2d;
+
+    /// Multiplies the vector by a scalar.
+     fn multiply(&mut self, scalar: f64);
+
+    /// Returns the vector multiplied by a scalar.
+     fn multiplied(&self, scalar: f64) -> NVec2d;
+
+    /// Divides the vector by a scalar.
+     fn divide(&mut self, scalar: f64) -> Result<(), NatureError>;
+
+    /// Returns the vector divided by a scalar.
+     fn divided(&self, scalar: f64) -> Result<NVec2d, NatureError>;
+
+    /// Computes the cross product with another vector (returns a scalar).
+     fn crossed(&self, other: &NVec2d) -> f64;
+
+    /// Computes the magnitude of the cross product with another vector.
+     fn cross_magnitude(&self, other: &NVec2d) -> f64;
+
+    /// Computes the square magnitude of the cross product with another vector.
+     fn cross_square_magnitude(&self, other: &NVec2d) -> f64;
+
+    /// Computes the dot product with another vector.
+     fn dot(&self, other: &NVec2d) -> f64;
+
+    /// Returns a vector normal to this one (rotated 90 degrees counterclockwise).
+     fn get_normal(&self) -> NVec2d;
+
+    /// Normalizes the vector.
+     fn normalize(&mut self) -> Result<(), NatureError>;
+
+    /// Returns a normalized copy of the vector.
+     fn normalized(&self) -> Result<NVec2d, NatureError>;
+
+    /// Reverses the direction of the vector.
+     fn reverse(&mut self);
+
+    /// Returns a reversed copy of the vector.
+     fn reversed(&self) -> NVec2d;
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2 + v3.
+     fn set_linear_form(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d, v3: &NVec2d);
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2.
+     fn set_linear_form_2(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d);
+
+    /// Sets the vector to a linear combination: a1*v1 + v2.
+     fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec2d, v2: &NVec2d);
+
+    /// Sets the vector to a linear combination: v1 + v2.
+     fn set_linear_form_sum(&mut self, v1: &NVec2d, v2: &NVec2d);
+
+    /// Mirrors the vector with respect to another vector.
+     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NatureError>;
+
+    /// Returns a mirrored copy with respect to another vector.
+     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NatureError>;
+
+    /// Mirrors the vector with respect to an axis.
+     fn mirror_ax2d(&mut self, a1: &NAx2d);
+
+    /// Returns a mirrored copy with respect to an axis.
+     fn mirrored_ax2d(&self, a1: &NAx2d) -> NVec2d;
+
+    /// Rotates the vector by an angle.
+     fn rotate(&mut self, ang: f64) -> Result<(), NatureError>;
+
+    /// Returns a rotated copy of the vector.
+     fn rotated(&self, ang: f64) -> Result<NVec2d, NatureError>;
+
+    /// Scales the vector by a factor.
+     fn scale(&mut self, s: f64);
+
+    /// Returns a scaled copy of the vector.
+     fn scaled(&self, s: f64) -> NVec2d;
+
+    /// Transforms the vector with a transformation.
+     fn transform(&mut self, t: &NTrsf2d);
+
+    /// Returns a transformed copy of the vector.
+     fn transformed(&self, t: &NTrsf2d) -> NVec2d;
+
+    /// Dumps the vector as JSON.
+     fn dump_json(&self, out: &mut dyn Write, depth: i32);
+
+    /// Initializes the vector from JSON.
+     fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool;
+}
+
+impl Vec2d for NVec2d {
+    /// Creates a zero vector.
+     fn new() -> Self {
         NVec2d {
             coord: NXY::new(0.0, 0.0),
         }
     }
 
     /// Creates a unitary vector from a direction.
-    pub fn new_from_dir(dir: &NDir2d) -> Self {
+     fn new_from_dir(dir: &NDir2d) -> Self {
         NVec2d {
             coord: dir.xy(),
         }
     }
 
     /// Creates a vector with the given coordinates.
-    pub fn new_from_coords(x: f64, y: f64) -> Self {
+     fn new_from_coords(x: f64, y: f64) -> Self {
         NVec2d {
             coord: NXY::new(x, y),
         }
     }
 
     /// Creates a vector from two points (P2 - P1).
-    pub fn new_from_points(p1: &NPnt2d, p2: &NPnt2d) -> Self {
+     fn new_from_points(p1: &NPnt2d, p2: &NPnt2d) -> Self {
         NVec2d {
             coord: p2.xy().subtracted(&p1.xy()),
         }
     }
 
     /// Sets the coordinate at the given index (1=X, 2=Y).
-    pub fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError> {
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError> {
         match index {
             1 => self.coord.set_x(value),
             2 => self.coord.set_y(value),
@@ -56,27 +218,27 @@ impl NVec2d {
     }
 
     /// Sets all coordinates.
-    pub fn set_coords(&mut self, x: f64, y: f64) {
+     fn set_coords(&mut self, x: f64, y: f64) {
         self.coord.set_coord(x, y);
     }
 
     /// Sets the X coordinate.
-    pub fn set_x(&mut self, x: f64) {
+     fn set_x(&mut self, x: f64) {
         self.coord.set_x(x);
     }
 
     /// Sets the Y coordinate.
-    pub fn set_y(&mut self, y: f64) {
+     fn set_y(&mut self, y: f64) {
         self.coord.set_y(y);
     }
 
     /// Sets the coordinates from an NXY.
-    pub fn set_xy(&mut self, xy: &NXY) {
+     fn set_xy(&mut self, xy: &NXY) {
         self.coord = xy.clone();
     }
 
     /// Gets the coordinate at the given index (1=X, 2=Y).
-    pub fn coord(&self, index: i32) -> Result<f64, NatureError> {
+     fn coord(&self, index: i32) -> Result<f64, NatureError> {
         match index {
             1 => Ok(self.coord.x()),
             2 => Ok(self.coord.y()),
@@ -85,27 +247,27 @@ impl NVec2d {
     }
 
     /// Gets all coordinates.
-    pub fn coords(&self) -> (f64, f64) {
+     fn coords(&self) -> (f64, f64) {
         (self.coord.x(), self.coord.y())
     }
 
     /// Gets the X coordinate.
-    pub fn x(&self) -> f64 {
+     fn x(&self) -> f64 {
         self.coord.x()
     }
 
     /// Gets the Y coordinate.
-    pub fn y(&self) -> f64 {
+     fn y(&self) -> f64 {
         self.coord.y()
     }
 
     /// Gets the coordinates as an NXY.
-    pub fn xy(&self) -> NXY {
+     fn xy(&self) -> NXY {
         self.coord.clone()
     }
 
     /// Checks if two vectors are equal within tolerances.
-    pub fn is_equal(&self, other: &NVec2d, linear_tolerance: f64, angular_tolerance: f64) -> bool {
+     fn is_equal(&self, other: &NVec2d, linear_tolerance: f64, angular_tolerance: f64) -> bool {
         let norm = self.magnitude();
         let other_norm = other.magnitude();
         let val = (norm - other_norm).abs();
@@ -122,13 +284,13 @@ impl NVec2d {
     }
 
     /// Checks if the vector is normal to another within angular tolerance.
-    pub fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
         let angle = (std::f64::consts::PI / 2.0 - self.angle(other)?.abs()).abs();
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is opposite to another within angular tolerance.
-    pub fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
         let mut angle = self.angle(other)?.abs();
         if angle > std::f64::consts::PI {
             angle = 2.0 * std::f64::consts::PI - angle;
@@ -137,7 +299,7 @@ impl NVec2d {
     }
 
     /// Checks if the vector is parallel to another within angular tolerance.
-    pub fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
         let mut angle = self.angle(other)?.abs();
         if angle > std::f64::consts::PI {
             angle = 2.0 * std::f64::consts::PI - angle;
@@ -146,7 +308,7 @@ impl NVec2d {
     }
 
     /// Computes the angle between two vectors (-PI to PI radians).
-    pub fn angle(&self, other: &NVec2d) -> Result<f64, NatureError> {
+     fn angle(&self, other: &NVec2d) -> Result<f64, NatureError> {
         let norm = self.magnitude();
         let other_norm = other.magnitude();
         if norm <= gp::resolution() || other_norm <= gp::resolution() {
@@ -167,53 +329,53 @@ impl NVec2d {
     }
 
     /// Computes the magnitude of the vector.
-    pub fn magnitude(&self) -> f64 {
+     fn magnitude(&self) -> f64 {
         self.coord.modulus()
     }
 
     /// Computes the square magnitude of the vector.
-    pub fn square_magnitude(&self) -> f64 {
+     fn square_magnitude(&self) -> f64 {
         self.coord.square_modulus()
     }
 
     /// Adds another vector to this one.
-    pub fn add(&mut self, other: &NVec2d) {
+     fn add(&mut self, other: &NVec2d) {
         self.coord.add(&other.coord);
     }
 
     /// Returns the sum of two vectors.
-    pub fn added(&self, other: &NVec2d) -> NVec2d {
+     fn added(&self, other: &NVec2d) -> NVec2d {
         NVec2d {
             coord: self.coord.added(&other.coord),
         }
     }
 
     /// Subtracts another vector from this one.
-    pub fn subtract(&mut self, other: &NVec2d) {
+     fn subtract(&mut self, other: &NVec2d) {
         self.coord.subtract(&other.coord);
     }
 
     /// Returns the difference of two vectors.
-    pub fn subtracted(&self, other: &NVec2d) -> NVec2d {
+     fn subtracted(&self, other: &NVec2d) -> NVec2d {
         NVec2d {
             coord: self.coord.subtracted(&other.coord),
         }
     }
 
     /// Multiplies the vector by a scalar.
-    pub fn multiply(&mut self, scalar: f64) {
+     fn multiply(&mut self, scalar: f64) {
         self.coord.multiply(scalar);
     }
 
     /// Returns the vector multiplied by a scalar.
-    pub fn multiplied(&self, scalar: f64) -> NVec2d {
+     fn multiplied(&self, scalar: f64) -> NVec2d {
         NVec2d {
             coord: self.coord.multiplied(scalar),
         }
     }
 
     /// Divides the vector by a scalar.
-    pub fn divide(&mut self, scalar: f64) -> Result<(), NatureError> {
+     fn divide(&mut self, scalar: f64) -> Result<(), NatureError> {
         if scalar.abs() <= gp::resolution() {
             return Err(NatureError::InvalidConstructionParameters);
         }
@@ -222,7 +384,7 @@ impl NVec2d {
     }
 
     /// Returns the vector divided by a scalar.
-    pub fn divided(&self, scalar: f64) -> Result<NVec2d, NatureError> {
+     fn divided(&self, scalar: f64) -> Result<NVec2d, NatureError> {
         if scalar.abs() <= gp::resolution() {
             return Err(NatureError::InvalidConstructionParameters);
         }
@@ -232,34 +394,34 @@ impl NVec2d {
     }
 
     /// Computes the cross product with another vector (returns a scalar).
-    pub fn crossed(&self, other: &NVec2d) -> f64 {
+     fn crossed(&self, other: &NVec2d) -> f64 {
         self.coord.crossed(&other.coord)
     }
 
     /// Computes the magnitude of the cross product with another vector.
-    pub fn cross_magnitude(&self, other: &NVec2d) -> f64 {
+     fn cross_magnitude(&self, other: &NVec2d) -> f64 {
         self.coord.cross_magnitude(&other.coord)
     }
 
     /// Computes the square magnitude of the cross product with another vector.
-    pub fn cross_square_magnitude(&self, other: &NVec2d) -> f64 {
+     fn cross_square_magnitude(&self, other: &NVec2d) -> f64 {
         self.coord.cross_square_magnitude(&other.coord)
     }
 
     /// Computes the dot product with another vector.
-    pub fn dot(&self, other: &NVec2d) -> f64 {
+     fn dot(&self, other: &NVec2d) -> f64 {
         self.coord.dot(&other.coord)
     }
 
     /// Returns a vector normal to this one (rotated 90 degrees counterclockwise).
-    pub fn get_normal(&self) -> NVec2d {
+     fn get_normal(&self) -> NVec2d {
         NVec2d {
             coord: NXY::new(self.y(), -self.x()),
         }
     }
 
     /// Normalizes the vector.
-    pub fn normalize(&mut self) -> Result<(), NatureError> {
+     fn normalize(&mut self) -> Result<(), NatureError> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
             return Err(NatureError::VectorWithNullMagnitude);
@@ -269,7 +431,7 @@ impl NVec2d {
     }
 
     /// Returns a normalized copy of the vector.
-    pub fn normalized(&self) -> Result<NVec2d, NatureError> {
+     fn normalized(&self) -> Result<NVec2d, NatureError> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
             return Err(NatureError::VectorWithNullMagnitude);
@@ -280,39 +442,39 @@ impl NVec2d {
     }
 
     /// Reverses the direction of the vector.
-    pub fn reverse(&mut self) {
+     fn reverse(&mut self) {
         self.coord.reverse();
     }
 
     /// Returns a reversed copy of the vector.
-    pub fn reversed(&self) -> NVec2d {
+     fn reversed(&self) -> NVec2d {
         NVec2d {
             coord: self.coord.reversed(),
         }
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2 + v3.
-    pub fn set_linear_form(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d, v3: &NVec2d) {
+     fn set_linear_form(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d, v3: &NVec2d) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord, &v3.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2.
-    pub fn set_linear_form_2(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d) {
+     fn set_linear_form_2(&mut self, a1: f64, v1: &NVec2d, a2: f64, v2: &NVec2d) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + v2.
-    pub fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec2d, v2: &NVec2d) {
+     fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec2d, v2: &NVec2d) {
         self.coord.set_linear_form(a1, &v1.coord, &v2.coord);
     }
 
     /// Sets the vector to a linear combination: v1 + v2.
-    pub fn set_linear_form_sum(&mut self, v1: &NVec2d, v2: &NVec2d) {
+     fn set_linear_form_sum(&mut self, v1: &NVec2d, v2: &NVec2d) {
         self.coord.set_linear_form(&v1.coord, &v2.coord);
     }
 
     /// Mirrors the vector with respect to another vector.
-    pub fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NatureError> {
+     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NatureError> {
         let d = v.magnitude();
         if d <= gp::resolution() {
             return Err(NatureError::VectorWithNullMagnitude);
@@ -331,14 +493,14 @@ impl NVec2d {
     }
 
     /// Returns a mirrored copy with respect to another vector.
-    pub fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NatureError> {
+     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NatureError> {
         let mut result = self.clone();
         result.mirror_vec(v)?;
         Ok(result)
     }
 
     /// Mirrors the vector with respect to an axis.
-    pub fn mirror_ax2d(&mut self, a1: &NAx2d) {
+     fn mirror_ax2d(&mut self, a1: &NAx2d) {
         let xy = a1.direction().xy();
         let a = xy.x();
         let b = xy.y();
@@ -352,14 +514,14 @@ impl NVec2d {
     }
 
     /// Returns a mirrored copy with respect to an axis.
-    pub fn mirrored_ax2d(&self, a1: &NAx2d) -> NVec2d {
+     fn mirrored_ax2d(&self, a1: &NAx2d) -> NVec2d {
         let mut result = self.clone();
         result.mirror_ax2d(a1);
         result
     }
 
     /// Rotates the vector by an angle.
-    pub fn rotate(&mut self, ang: f64) -> Result<(), NatureError> {
+     fn rotate(&mut self, ang: f64) -> Result<(), NatureError> {
         let mut t = NTrsf2d::new();
         t.set_rotation(&NPnt2d::new(0.0, 0.0), ang)?;
         self.coord.multiply(&t.vectorial_part());
@@ -367,26 +529,26 @@ impl NVec2d {
     }
 
     /// Returns a rotated copy of the vector.
-    pub fn rotated(&self, ang: f64) -> Result<NVec2d, NatureError> {
+     fn rotated(&self, ang: f64) -> Result<NVec2d, NatureError> {
         let mut result = self.clone();
         result.rotate(ang)?;
         Ok(result)
     }
 
     /// Scales the vector by a factor.
-    pub fn scale(&mut self, s: f64) {
+     fn scale(&mut self, s: f64) {
         self.coord.multiply(s);
     }
 
     /// Returns a scaled copy of the vector.
-    pub fn scaled(&self, s: f64) -> NVec2d {
+     fn scaled(&self, s: f64) -> NVec2d {
         NVec2d {
             coord: self.coord.multiplied(s),
         }
     }
 
     /// Transforms the vector with a transformation.
-    pub fn transform(&mut self, t: &NTrsf2d) {
+     fn transform(&mut self, t: &NTrsf2d) {
         match t.form() {
             NTrsfForm::Identity | NTrsfForm::Translation => {}
             NTrsfForm::PntMirror => self.coord.reverse(),
@@ -396,14 +558,14 @@ impl NVec2d {
     }
 
     /// Returns a transformed copy of the vector.
-    pub fn transformed(&self, t: &NTrsf2d) -> NVec2d {
+     fn transformed(&self, t: &NTrsf2d) -> NVec2d {
         let mut result = self.clone();
         result.transform(t);
         result
     }
 
     /// Dumps the vector as JSON.
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
+     fn dump_json(&self, out: &mut dyn Write, depth: i32) {
         let indent = " ".repeat((depth * 2) as usize);
         writeln!(
             out,
@@ -415,7 +577,7 @@ impl NVec2d {
     }
 
     /// Initializes the vector from JSON.
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
+     fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
         let search = "\"coordinates\": [";
         if let Some(start) = json[*pos..].find(search) {
             *pos += start + search.len();

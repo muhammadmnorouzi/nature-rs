@@ -48,7 +48,7 @@ pub trait Trsf2d {
 }
 
 // Struct representing a 2D transformation
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default,Debug, PartialEq, Serialize, Deserialize)]
 pub struct NTrsf2d {
     scale: f64,
     shape: NTrsfForm,

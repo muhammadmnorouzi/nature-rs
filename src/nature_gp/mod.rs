@@ -40,3 +40,20 @@ pub mod vec2f;
 pub mod vec3f;
 pub mod xy;
 pub mod xyz;
+
+pub mod prelude {
+    use super::*;
+
+    pub use gp::{GP, NGP};
+    pub use point2d::{NPoint2d, Point2d};
+    pub use point3d::{NPoint3d, Point3d};
+    pub use xy::{NXY, XY};
+    pub use xyz::{NXYZ, XYZ};
+
+    pub use ax2d::{Ax2d, NAx2d};
+    pub use dir2d::{Dir2d, NDir2d};
+    pub use trsf::{NTrsf, Trsf};
+    pub use trsf_form::NTrsfForm;
+    pub use trsf2d::{NTrsf2d, Trsf2d};
+    pub use vec2d::{NVec2d, Vec2d};
+}

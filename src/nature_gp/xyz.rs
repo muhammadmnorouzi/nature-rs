@@ -1,10 +1,7 @@
 use std::fmt::Debug;
-
 use serde::{Deserialize, Serialize};
-
 use crate::nature_errors::NErrors;
-
-use super::gp::{GP, NGP};
+use super::prelude::*;
 
 pub trait XYZ
 where
