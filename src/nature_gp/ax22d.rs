@@ -24,8 +24,8 @@ pub trait Ax22d {
     fn location(&self) -> &NPoint2d;
     fn x_direction(&self) -> &NDir2d;
     fn y_direction(&self) -> &NDir2d;
-    fn mirror_pnt(&mut self, point: &NPoint2d);
-    fn mirrored_pnt(&self, point: &NPoint2d) -> Self;
+    fn mirror_point3d(&mut self, point: &NPoint2d);
+    fn mirrored_point3d(&self, point: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, axis: &NAx2d);
     fn mirrored_ax2d(&self, axis: &NAx2d) -> Self;
     fn rotate(&mut self, point: &NPoint2d, angle: f64);
@@ -176,15 +176,15 @@ impl Ax22d for NAx22d {
         &self.vydir
     }
 
-    fn mirror_pnt(&mut self, point: &NPoint2d) {
-        self.point.mirror_pnt(point);
+    fn mirror_point3d(&mut self, point: &NPoint2d) {
+        self.point.mirror_point3d(point);
         self.vxdir.reverse();
         self.vydir.reverse();
     }
 
-    fn mirrored_pnt(&self, point: &NPoint2d) -> Self {
+    fn mirrored_point3d(&self, point: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(point);
+        result.mirror_point3d(point);
         result
     }
 
@@ -369,10 +369,10 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut ax = ax22d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0));
         let point = NPoint2d::new(0.0, 0.0);
-        ax.mirror_pnt(&point);
+        ax.mirror_point3d(&point);
         assert_eq!(ax.location(), &NPoint2d::new(-1.0, 0.0));
         assert_eq!(ax.x_direction(), &NDir2d::new(-1.0, 0.0).unwrap());
         assert_eq!(ax.y_direction(), &NDir2d::new(0.0, -1.0).unwrap());

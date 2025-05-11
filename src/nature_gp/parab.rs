@@ -23,8 +23,8 @@ pub trait Parab {
     fn position(&self) -> NAx2;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: &NPoint3d);
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
+    fn mirror_point3d(&mut self, p: &NPoint3d);
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -190,14 +190,14 @@ impl Parab for NParab {
     }
 
     /// Mirrors the parabola with respect to a point.
-    fn mirror_pnt(&mut self, p: &NPoint3d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint3d) {
+        self.pos.mirror_point3d(p);
     }
 
     /// Returns the parabola mirrored with respect to a point.
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self {
         let mut prb = self.clone();
-        prb.mirror_pnt(p);
+        prb.mirror_point3d(p);
         prb
     }
 

@@ -29,8 +29,8 @@ pub trait Cone {
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
     fn coefficients(&self) -> (f64, f64, f64, f64, f64, f64, f64, f64, f64, f64);
-    fn mirror_pnt(&mut self, point: &NPoint3d);
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self;
+    fn mirror_point3d(&mut self, point: &NPoint3d);
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self;
     fn mirror_ax1(&mut self, axis: &NAx1);
     fn mirrored_ax1(&self, axis: &NAx1) -> Self;
     fn mirror_ax2(&mut self, plane: &NAx2);
@@ -181,13 +181,13 @@ impl Cone for NCone {
         (a1, a2, a3, b1, b2, b3, c1, c2, c3, d)
     }
 
-    fn mirror_pnt(&mut self, point: &NPoint3d) {
-        self.pos.mirror_pnt(point);
+    fn mirror_point3d(&mut self, point: &NPoint3d) {
+        self.pos.mirror_point3d(point);
     }
 
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(point);
+        result.mirror_point3d(point);
         result
     }
 
@@ -449,7 +449,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut cone = cone(
             (1.0, 0.0, 0.0),
             (0.0, 0.0, 1.0),
@@ -458,7 +458,7 @@ mod tests {
             5.0,
         );
         let point = NPoint3d::new(0.0, 0.0, 0.0);
-        cone.mirror_pnt(&point);
+        cone.mirror_point3d(&point);
         assert_eq!(cone.location(), &NPoint3d::new(-1.0, 0.0, 0.0));
         assert_eq!(cone.semi_angle(), PI / 4.0);
         assert_eq!(cone.ref_radius(), 5.0);

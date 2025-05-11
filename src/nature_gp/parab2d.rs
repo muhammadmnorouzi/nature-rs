@@ -38,8 +38,8 @@ pub trait Parab2d {
     where
         Self: Sized;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, p: &NPoint2d);
-    fn mirrored_pnt(&self, p: &NPoint2d) -> Self
+    fn mirror_point3d(&mut self, p: &NPoint2d);
+    fn mirrored_point3d(&self, p: &NPoint2d) -> Self
     where
         Self: Sized;
     fn mirror_ax2d(&mut self, a: &NAx2d);
@@ -250,14 +250,14 @@ impl Parab2d for NParab2d {
     }
 
     /// Mirrors the parabola with respect to a point.
-    fn mirror_pnt(&mut self, p: &NPoint2d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint2d) {
+        self.pos.mirror_point3d(p);
     }
 
     /// Returns the parabola mirrored with respect to a point.
-    fn mirrored_pnt(&self, p: &NPoint2d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint2d) -> Self {
         let mut prb = self.clone();
-        prb.mirror_pnt(p);
+        prb.mirror_point3d(p);
         prb
     }
 

@@ -42,8 +42,8 @@ pub trait Torus {
     fn volume(&self) -> f64;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: NPoint3d);
-    fn mirrored_pnt(&self, p: NPoint3d) -> Self;
+    fn mirror_point3d(&mut self, p: NPoint3d);
+    fn mirrored_point3d(&self, p: NPoint3d) -> Self;
     fn mirror_ax1(&mut self, a1: NAx1);
     fn mirrored_ax1(&self, a1: NAx1) -> Self;
     fn mirror_ax2(&mut self, a2: NAx2);
@@ -295,12 +295,12 @@ impl Torus for NTorus {
     }
 
     /// Mirrors the torus with respect to a point.
-    fn mirror_pnt(&mut self, p: NPoint3d) {
+    fn mirror_point3d(&mut self, p: NPoint3d) {
         self.pos.mirror(p);
     }
 
     /// Returns a mirrored torus with respect to a point.
-    fn mirrored_pnt(&self, p: NPoint3d) -> Self {
+    fn mirrored_point3d(&self, p: NPoint3d) -> Self {
         let mut c = self.clone();
         c.pos.mirror(p);
         c
@@ -483,11 +483,11 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut t = create_test_torus();
         let p = NPoint3d::new(1.0, 2.0, 3.0);
-        t.mirror_pnt(p);
-        let mirrored = t.mirrored_pnt(p);
+        t.mirror_point3d(p);
+        let mirrored = t.mirrored_point3d(p);
         assert_eq!(t.position(), mirrored.position());
     }
 

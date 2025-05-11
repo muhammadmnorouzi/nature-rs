@@ -43,8 +43,8 @@ pub trait Elips2d {
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, p: &NPoint2d);
-    fn mirrored_pnt(&self, p: &NPoint2d) -> Self;
+    fn mirror_point3d(&mut self, p: &NPoint2d);
+    fn mirrored_point3d(&self, p: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, a: &NAx2d);
     fn mirrored_ax2d(&self, a: &NAx2d) -> Self;
     fn rotate(&mut self, p: &NPoint2d, angle: f64);
@@ -279,13 +279,13 @@ impl Elips2d for NElips2d {
         self.pos.x_direction().crossed(&self.pos.y_direction()) >= 0.0
     }
 
-    fn mirror_pnt(&mut self, p: &NPoint2d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint2d) {
+        self.pos.mirror_point3d(p);
     }
 
-    fn mirrored_pnt(&self, p: &NPoint2d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(p);
+        result.mirror_point3d(p);
         result
     }
 
@@ -586,10 +586,10 @@ mod tests {
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
         let p_mirror = NPoint2d::new(1.0, 1.0);
-        elips.mirror_pnt(&p_mirror);
+        elips.mirror_point3d(&p_mirror);
         assert_eq!(elips.location(), &NPoint2d::new(2.0, 2.0));
 
-        let mirrored = elips.mirrored_pnt(&p_mirror);
+        let mirrored = elips.mirrored_point3d(&p_mirror);
         assert_eq!(mirrored.location(), &NPoint2d::new(0.0, 0.0));
 
         let ax_mirror = ax2d(&NPoint2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());

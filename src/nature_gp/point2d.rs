@@ -25,8 +25,8 @@ where
     fn is_equal(&self, other: &Self, linear_tolerance: f64) -> bool;
     fn distance(&self, other: &Self) -> f64;
     fn square_distance(&self, other: &Self) -> f64;
-    fn mirror_pnt(&mut self, p: &Self);
-    fn mirrored_pnt(&self, p: &Self) -> Self;
+    fn mirror_point3d(&mut self, p: &Self);
+    fn mirrored_point3d(&self, p: &Self) -> Self;
     fn mirror_ax2d(&mut self, a: &NAx2d);
     fn mirrored_ax2d(&self, a: &NAx2d) -> Self;
     fn rotate(&mut self, p: &Self, ang: f64);
@@ -122,16 +122,16 @@ impl Point2d for NPoint2d {
         dx.powi(2) + dy.powi(2)
     }
 
-    fn mirror_pnt(&mut self, p: &Self) {
+    fn mirror_point3d(&mut self, p: &Self) {
         let mut xyz = p.coord.clone();
         xyz.multiply(2.0);
         self.coord.reverse();
         self.coord.add(&xyz);
     }
 
-    fn mirrored_pnt(&self, p: &Self) -> Self {
+    fn mirrored_point3d(&self, p: &Self) -> Self {
         let mut res = self.clone();
-        res.mirror_pnt(p);
+        res.mirror_point3d(p);
         res
     }
 
@@ -301,10 +301,10 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut p = NPoint2d::new(1.0, 1.0);
         let center = NPoint2d::new(0.0, 0.0);
-        p.mirror_pnt(&center);
+        p.mirror_point3d(&center);
         assert_eq!(p.coords(), (-1.0, -1.0));
     }
 

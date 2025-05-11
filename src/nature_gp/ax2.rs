@@ -27,8 +27,8 @@ pub trait Ax2 {
     fn y_direction(&self) -> &NDir;
     fn is_coplanar_ax2(&self, other: &Self, linear_tolerance: f64, angular_tolerance: f64) -> bool;
     fn is_coplanar_ax1(&self, axis: &NAx1, linear_tolerance: f64, angular_tolerance: f64) -> bool;
-    fn mirror_pnt(&mut self, point: &NPoint3d);
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self;
+    fn mirror_point3d(&mut self, point: &NPoint3d);
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self;
     fn mirror_ax1(&mut self, axis: &NAx1);
     fn mirrored_ax1(&self, axis: &NAx1) -> Self;
     fn mirror_ax2(&mut self, plane: &Self);
@@ -231,15 +231,15 @@ impl Ax2 for NAx2 {
         d1.abs() <= linear_tolerance && self.axis.is_normal(axis, angular_tolerance)
     }
 
-    fn mirror_pnt(&mut self, point: &NPoint3d) {
-        self.axis.mirror_pnt(point);
+    fn mirror_point3d(&mut self, point: &NPoint3d) {
+        self.axis.mirror_point3d(point);
         self.vxdir.reverse();
         self.vydir.reverse();
     }
 
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(point);
+        result.mirror_point3d(point);
         result
     }
 
@@ -429,10 +429,10 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut ax2 = ax2((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0));
         let point = NPoint3d::new(0.0, 0.0, 0.0);
-        ax2.mirror_pnt(&point);
+        ax2.mirror_point3d(&point);
         assert_eq!(ax2.location(), &NPoint3d::new(-1.0, 0.0, 0.0));
         assert_eq!(ax2.x_direction(), &NDir::new(-1.0, 0.0, 0.0).unwrap());
         assert_eq!(ax2.y_direction(), &NDir::new(0.0, -1.0, 0.0).unwrap());

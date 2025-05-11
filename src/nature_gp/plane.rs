@@ -23,18 +23,18 @@ pub trait Pln {
     fn axis(&self) -> NAx1;
     fn location(&self) -> NPoint3d;
     fn position(&self) -> NAx3;
-    fn distance_pnt(&self, p: &NPoint3d) -> f64;
+    fn distance_point3d(&self, p: &NPoint3d) -> f64;
     fn distance_lin(&self, l: &NLin) -> f64;
     fn distance_pln(&self, other: &Self) -> f64;
-    fn square_distance_pnt(&self, p: &NPoint3d) -> f64;
+    fn square_distance_point3d(&self, p: &NPoint3d) -> f64;
     fn square_distance_lin(&self, l: &NLin) -> f64;
     fn square_distance_pln(&self, other: &Self) -> f64;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn contains_pnt(&self, p: &NPoint3d, linear_tolerance: f64) -> bool;
+    fn contains_point3d(&self, p: &NPoint3d, linear_tolerance: f64) -> bool;
     fn contains_lin(&self, l: &NLin, linear_tolerance: f64, angular_tolerance: f64) -> bool;
-    fn mirror_pnt(&mut self, p: &NPoint3d);
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
+    fn mirror_point3d(&mut self, p: &NPoint3d);
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -238,7 +238,7 @@ impl Pln for NPln {
     }
 
     /// Computes the distance between the plane and a point.
-    fn distance_pnt(&self, p: &NPoint3d) -> f64 {
+    fn distance_point3d(&self, p: &NPoint3d) -> f64 {
         let loc = self.pos.location();
         let dir = self.pos.direction();
         let d =
@@ -285,8 +285,8 @@ impl Pln for NPln {
     }
 
     /// Computes the square distance between the plane and a point.
-    fn square_distance_pnt(&self, p: &NPoint3d) -> f64 {
-        let d = self.distance_pnt(p);
+    fn square_distance_point3d(&self, p: &NPoint3d) -> f64 {
+        let d = self.distance_point3d(p);
         d * d
     }
 
@@ -313,13 +313,13 @@ impl Pln for NPln {
     }
 
     /// Returns true if the plane contains the point within the linear tolerance.
-    fn contains_pnt(&self, p: &NPoint3d, linear_tolerance: f64) -> bool {
-        self.distance_pnt(p) <= linear_tolerance
+    fn contains_point3d(&self, p: &NPoint3d, linear_tolerance: f64) -> bool {
+        self.distance_point3d(p) <= linear_tolerance
     }
 
     /// Returns true if the plane contains the line within the specified tolerances.
     fn contains_lin(&self, l: &NLin, linear_tolerance: f64, angular_tolerance: f64) -> bool {
-        self.contains_pnt(&l.location(), linear_tolerance)
+        self.contains_point3d(&l.location(), linear_tolerance)
             && self
                 .pos
                 .direction()
@@ -327,14 +327,14 @@ impl Pln for NPln {
     }
 
     /// Mirrors the plane with respect to a point.
-    fn mirror_pnt(&mut self, p: &NPoint3d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint3d) {
+        self.pos.mirror_point3d(p);
     }
 
     /// Returns the plane mirrored with respect to a point.
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self {
         let mut pl = self.clone();
-        pl.mirror_pnt(p);
+        pl.mirror_point3d(p);
         pl
     }
 
@@ -488,11 +488,11 @@ mod tests {
     }
 
     #[test]
-    fn test_distance_pnt() {
+    fn test_distance_point3d() {
         let pln = create_test_plane();
         let p = NPoint3d::new(0.0, 0.0, 5.0);
-        assert!((pln.distance_pnt(&p) - 5.0).abs() < 1e-9);
-        assert!((pln.square_distance_pnt(&p) - 25.0).abs() < 1e-9);
+        assert!((pln.distance_point3d(&p) - 5.0).abs() < 1e-9);
+        assert!((pln.square_distance_point3d(&p) - 25.0).abs() < 1e-9);
     }
 
     #[test]
@@ -514,7 +514,7 @@ mod tests {
     fn test_contains() {
         let pln = create_test_plane();
         let p = NPoint3d::new(1.0, 1.0, 0.0);
-        assert!(pln.contains_pnt(&p, 1e-6));
+        assert!(pln.contains_point3d(&p, 1e-6));
         let l = NLin::new_with_ax1(&NAx1::new(
             &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(1.0, 0.0, 0.0),

@@ -13,7 +13,7 @@ mod gp {
 pub trait Trsf {
     fn new() -> Self;
     fn new_from_trsf2d(t: &NTrsf2d) -> Self;
-    fn set_mirror_pnt(&mut self, p: &NPoint3d);
+    fn set_mirror_point3d(&mut self, p: &NPoint3d);
     fn set_mirror_ax1(&mut self, a1: &NAx1);
     fn set_mirror_ax2(&mut self, a2: &NAx2);
     fn set_rotation_ax1(&mut self, a1: &NAx1, ang: f64);
@@ -113,7 +113,7 @@ impl Trsf for NTrsf {
     }
 
     /// Sets the transformation to a point mirror.
-    fn set_mirror_pnt(&mut self, p: &NPoint3d) {
+    fn set_mirror_point3d(&mut self, p: &NPoint3d) {
         self.shape = NTrsfForm::PntMirror;
         self.scale = -1.0;
         self.loc = p.xyz();
@@ -1176,10 +1176,10 @@ mod tests {
     }
 
     #[test]
-    fn test_set_mirror_pnt() {
+    fn test_set_mirror_point3d() {
         let mut t = NTrsf::new();
         let p = NPoint3d::new(1.0, 2.0, 3.0);
-        t.set_mirror_pnt(&p);
+        t.set_mirror_point3d(&p);
         assert_eq!(t.form(), NTrsfForm::PntMirror);
         assert_eq!(t.scale_factor(), -1.0);
         assert_eq!(t.translation_part(), NXYZ::new(2.0, 4.0, 6.0));

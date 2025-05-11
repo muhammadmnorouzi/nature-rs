@@ -43,8 +43,8 @@ pub trait Hypr {
     fn position(&self) -> &NAx2;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: &NPoint3d);
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
+    fn mirror_point3d(&mut self, p: &NPoint3d);
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -311,14 +311,14 @@ impl Hypr for NHypr {
     }
 
     /// Mirrors the hyperbola about a point.
-    fn mirror_pnt(&mut self, p: &NPoint3d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint3d) {
+        self.pos.mirror_point3d(p);
     }
 
     /// Returns a hyperbola mirrored about a point.
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self {
         let mut h = self.clone();
-        h.mirror_pnt(p);
+        h.mirror_point3d(p);
         h
     }
 
@@ -550,7 +550,7 @@ mod tests {
         assert_eq!(h_scaled.major_radius(), 4.0);
         assert_eq!(h_scaled.minor_radius(), 2.0);
 
-        let mut h_mirrored = h.mirrored_pnt(&NPoint3d::new(1.0, 0.0, 0.0));
+        let mut h_mirrored = h.mirrored_point3d(&NPoint3d::new(1.0, 0.0, 0.0));
         assert!(
             h_mirrored
                 .location()

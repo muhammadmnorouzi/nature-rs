@@ -16,8 +16,8 @@ pub trait Ax1 {
     fn angle(&self, other: &Self) -> f64;
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
-    fn mirror_pnt(&mut self, point: &NPoint3d);
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self;
+    fn mirror_point3d(&mut self, point: &NPoint3d);
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self;
     fn mirror_ax1(&mut self, axis: &Self);
     fn mirrored_ax1(&self, axis: &Self) -> Self;
     fn mirror_ax2(&mut self, plane: &NAx2);
@@ -125,14 +125,14 @@ impl Ax1 for NAx1 {
         }
     }
 
-    fn mirror_pnt(&mut self, point: &NPoint3d) {
-        self.location.mirror_pnt(point);
+    fn mirror_point3d(&mut self, point: &NPoint3d) {
+        self.location.mirror_point3d(point);
         self.vertical_direction.reverse();
     }
 
-    fn mirrored_pnt(&self, point: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, point: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(point);
+        result.mirror_point3d(point);
         result
     }
 
@@ -280,19 +280,19 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut ax = new_ax1(1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let point = NPoint3d::new(0.0, 0.0, 0.0);
-        ax.mirror_pnt(&point);
+        ax.mirror_point3d(&point);
         assert_eq!(ax.location(), &NPoint3d::new(-1.0, 0.0, 0.0));
         assert_eq!(ax.direction(), &NDir::new(0.0, 0.0, -1.0).unwrap());
     }
 
     #[test]
-    fn test_mirrored_pnt() {
+    fn test_mirrored_point3d() {
         let ax = new_ax1(1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
         let point = NPoint3d::new(0.0, 0.0, 0.0);
-        let mirrored = ax.mirrored_pnt(&point);
+        let mirrored = ax.mirrored_point3d(&point);
         assert_eq!(mirrored.location(), &NPoint3d::new(-1.0, 0.0, 0.0));
         assert_eq!(mirrored.direction(), &NDir::new(0.0, 0.0, -1.0).unwrap());
     }

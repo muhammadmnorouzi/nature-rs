@@ -33,8 +33,8 @@ pub trait Circ2d {
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, point: &NPoint2d);
-    fn mirrored_pnt(&self, point: &NPoint2d) -> Self;
+    fn mirror_point3d(&mut self, point: &NPoint2d);
+    fn mirrored_point3d(&self, point: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, axis: &NAx2d);
     fn mirrored_ax2d(&self, axis: &NAx2d) -> Self;
     fn rotate(&mut self, point: &NPoint2d, angle: f64);
@@ -180,13 +180,13 @@ impl Circ2d for NCirc2d {
         self.pos.x_direction().crossed(self.pos.y_direction()) >= 0.0
     }
 
-    fn mirror_pnt(&mut self, point: &NPoint2d) {
-        self.pos.mirror_pnt(point);
+    fn mirror_point3d(&mut self, point: &NPoint2d) {
+        self.pos.mirror_point3d(point);
     }
 
-    fn mirrored_pnt(&self, point: &NPoint2d) -> Self {
+    fn mirrored_point3d(&self, point: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.mirror_pnt(point);
+        result.mirror_point3d(point);
         result
     }
 
@@ -376,10 +376,10 @@ mod tests {
     }
 
     #[test]
-    fn test_mirror_pnt() {
+    fn test_mirror_point3d() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
         let point = NPoint2d::new(0.0, 0.0);
-        circ.mirror_pnt(&point);
+        circ.mirror_point3d(&point);
         assert_eq!(circ.location(), &NPoint2d::new(-1.0, 0.0));
         assert_eq!(circ.radius(), 5.0);
     }

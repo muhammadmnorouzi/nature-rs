@@ -28,8 +28,8 @@ pub trait Lin {
     fn normal(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
-    fn mirror_pnt(&mut self, p: &NPoint3d);
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
+    fn mirror_point3d(&mut self, p: &NPoint3d);
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -193,14 +193,14 @@ impl Lin for NLin {
     }
 
     /// Mirrors the line about a point.
-    fn mirror_pnt(&mut self, p: &NPoint3d) {
-        self.pos.mirror_pnt(p);
+    fn mirror_point3d(&mut self, p: &NPoint3d) {
+        self.pos.mirror_point3d(p);
     }
 
     /// Returns a line mirrored about a point.
-    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
+    fn mirrored_point3d(&self, p: &NPoint3d) -> Self {
         let mut l = self.clone();
-        l.mirror_pnt(p);
+        l.mirror_point3d(p);
         l
     }
 
@@ -399,7 +399,7 @@ mod tests {
         let mut l_scaled = l.scaled(&NPoint3d::new(0.0, 0.0, 0.0), 2.0);
         assert_eq!(l_scaled.location(), &NPoint3d::new(0.0, 0.0, 0.0));
 
-        let mut l_mirrored = l.mirrored_pnt(&NPoint3d::new(0.0, 1.0, 0.0));
+        let mut l_mirrored = l.mirrored_point3d(&NPoint3d::new(0.0, 1.0, 0.0));
         assert_eq!(l_mirrored.location(), &NPoint3d::new(0.0, 2.0, 0.0));
     }
 
