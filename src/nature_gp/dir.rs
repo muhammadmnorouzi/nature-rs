@@ -7,9 +7,7 @@ use crate::{
     nature_errors::NErrors,
 };
 
-use super::
-    xyz::{NXYZ, XYZ}
-;
+use super::xyz::{NXYZ, XYZ};
 
 // Trait to define the behavior of a unit vector (direction) in 3D space
 pub trait Dir {

@@ -217,7 +217,11 @@ impl NVec2f {
         let cosinus = self.coord.dot(&other.coord) / d;
         let sinus = self.coord.crossed(&other.coord) / d;
         if cosinus > -0.70710678118655 && cosinus < 0.70710678118655 {
-            Ok(if sinus > 0.0 { cosinus.acos() } else { -cosinus.acos() })
+            Ok(if sinus > 0.0 {
+                cosinus.acos()
+            } else {
+                -cosinus.acos()
+            })
         } else if cosinus > 0.0 {
             Ok(sinus.asin())
         } else if sinus > 0.0 {
@@ -354,7 +358,8 @@ impl NVec2f {
             indent,
             self.coord.x(),
             self.coord.y()
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     /// Initializes the vector from JSON.

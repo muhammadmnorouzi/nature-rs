@@ -1,16 +1,7 @@
+use super::prelude::*;
+use crate::nature_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-
-use super::{
-    ax1::NAx1,
-    ax2::NAx2,
-    trsf::{NTrsf, Trsf},
-    trsf_form::NTrsfForm,
-    vec::NVec,
-    xyz::{NXYZ, XYZ},
-};
-
-use crate::nature_errors::NErrors;
 
 // Trait to define the behavior of a 3D Cartesian point
 pub trait Point3d

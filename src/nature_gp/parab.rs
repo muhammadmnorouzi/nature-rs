@@ -1,7 +1,7 @@
 use std::io::Write;
 
-use serde::{Deserialize, Serialize};
 use super::prelude::*;
+use serde::{Deserialize, Serialize};
 
 // Trait to define the behavior of a parabola in 3D space
 pub trait Parab {
@@ -51,8 +51,8 @@ pub trait Parab {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -276,14 +276,14 @@ impl Parab for NParab {
     }
 
     /// Translates the parabola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
     /// Returns the parabola translated from one point to another.
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut prb = self.clone();
-        prb.translate_pnts(p1, p2);
+        prb.translate_point3d(p1, p2);
         prb
     }
 

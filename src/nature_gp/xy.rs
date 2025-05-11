@@ -1,7 +1,7 @@
-use std::fmt::Debug;
-use serde::{Deserialize, Serialize};
-use crate::nature_errors::NErrors;
 use super::prelude::*;
+use crate::nature_common::prelude::*;
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 
 pub trait XY
 where

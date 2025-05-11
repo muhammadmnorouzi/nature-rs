@@ -81,8 +81,8 @@ pub trait Hypr2d {
     fn translated_vec(&self, v: &NVec2d) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -481,14 +481,14 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Translates the hyperbola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
     /// Returns a translated hyperbola from one point to another.
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut h = self.clone();
-        h.translate_pnts(p1, p2);
+        h.translate_point3d(p1, p2);
         h
     }
 

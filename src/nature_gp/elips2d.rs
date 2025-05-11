@@ -2,7 +2,7 @@ use std::f64::consts::PI;
 
 use serde::{Deserialize, Serialize};
 
-use crate::nature_errors::NErrors;
+use crate::nature_common::prelude::*;
 
 use crate::nature_gp::{NAx2d, NAx22d, NDir2d, NPoint2d, NTrsf2d, NVec2d};
 
@@ -55,8 +55,8 @@ pub trait Elips2d {
     fn transformed(&self, t: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, v: &NVec2d);
     fn translated_vec(&self, v: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self;
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self;
 }
 
 // Struct representing an ellipse in 2D space
@@ -344,13 +344,13 @@ impl Elips2d for NElips2d {
         result
     }
 
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(p1, p2);
+        result.translate_point3d(p1, p2);
         result
     }
 }
@@ -662,7 +662,7 @@ mod tests {
 
         let p1 = NPoint2d::new(1.0, 1.0);
         let p2 = NPoint2d::new(2.0, 3.0);
-        let translated = elips.translated_pnts(&p1, &p2);
+        let translated = elips.translated_point3d(&p1, &p2);
         assert_eq!(translated.location(), &NPoint2d::new(2.0, 3.0));
     }
 }

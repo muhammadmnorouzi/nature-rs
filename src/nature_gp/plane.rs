@@ -61,8 +61,8 @@ pub trait Pln {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -411,14 +411,14 @@ impl Pln for NPln {
     }
 
     /// Translates the plane from one point to another.
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
     /// Returns the plane translated from one point to another.
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut pl = self.clone();
-        pl.translate_pnts(p1, p2);
+        pl.translate_point3d(p1, p2);
         pl
     }
 

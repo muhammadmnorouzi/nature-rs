@@ -47,8 +47,8 @@ pub trait Ax3 {
     fn transformed(&self, transformation: &NTrsf) -> Self;
     fn translate_vec(&mut self, vector: &NVec);
     fn translated_vec(&self, vector: &NVec) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d);
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d);
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
 }
 
 // Struct representing a coordinate system in 3D space (right- or left-handed)
@@ -368,13 +368,13 @@ impl Ax3 for NAx3 {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.axis.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d) {
+        self.axis.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -447,7 +447,10 @@ mod tests {
     #[test]
     fn test_set_axis() {
         let mut ax3 = NAx3::origin();
-        let new_axis = NAx1::new(NPoint3d::new(1.0, 0.0, 0.0), NDir::new(1.0, 0.0, 0.0).unwrap());
+        let new_axis = NAx1::new(
+            NPoint3d::new(1.0, 0.0, 0.0),
+            NDir::new(1.0, 0.0, 0.0).unwrap(),
+        );
         ax3.set_axis(&new_axis).unwrap();
         assert_eq!(ax3.axis(), &new_axis);
         assert!(ax3.x_direction().is_normal(ax3.direction(), 1e-5));
@@ -501,7 +504,10 @@ mod tests {
     #[test]
     fn test_is_coplanar_ax1() {
         let ax3 = ax3((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0));
-        let ax1 = NAx1::new(NPoint3d::new(1.0, 0.0, 0.0), NDir::new(1.0, 0.0, 0.0).unwrap());
+        let ax1 = NAx1::new(
+            NPoint3d::new(1.0, 0.0, 0.0),
+            NDir::new(1.0, 0.0, 0.0).unwrap(),
+        );
         assert!(ax3.is_coplanar_ax1(&ax1, 1e-5, 1e-5));
     }
 

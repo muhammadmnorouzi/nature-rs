@@ -46,8 +46,8 @@ pub trait Elips {
     fn transformed(&self, t: &NTrsf) -> Self;
     fn translate_vec(&mut self, v: &NVec);
     fn translated_vec(&self, v: &NVec) -> Self;
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self;
 }
 
 // Struct representing an ellipse in 3D space
@@ -276,13 +276,13 @@ impl Elips for NElips {
         result
     }
 
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(p1, p2);
+        result.translate_point3d(p1, p2);
         result
     }
 }
@@ -591,7 +591,7 @@ mod tests {
 
         let p1 = NPoint3d::new(1.0, 1.0, 1.0);
         let p2 = NPoint3d::new(2.0, 3.0, 4.0);
-        let translated = elips.translated_pnts(&p1, &p2);
+        let translated = elips.translated_point3d(&p1, &p2);
         assert_eq!(translated.location(), &NPoint3d::new(2.0, 3.0, 4.0));
     }
 }

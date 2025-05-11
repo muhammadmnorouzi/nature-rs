@@ -2,7 +2,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NAx2d, NMat2d, NPoint2d, NTrsf, NTrsfForm, NVec2d, NXY, NErrors};
+use crate::gp::{NAx2d, NErrors, NMat2d, NPoint2d, NTrsf, NTrsfForm, NVec2d, NXY};
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -21,10 +21,18 @@ pub trait Trsf2d {
     fn set_transformation_ax2d(&mut self, from_a1: &NAx2d, to_a2: &NAx2d);
     fn set_transformation_ax2d_single(&mut self, to_a: &NAx2d);
     fn set_translation_vec(&mut self, v: &NVec2d);
-    fn set_translation_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn set_translation_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d);
     fn set_translation_part(&mut self, v: &NVec2d);
     fn set_scale_factor(&mut self, s: f64);
-    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a21: f64, a22: f64, a23: f64) -> Result<(), NErrors>;
+    fn set_values(
+        &mut self,
+        a11: f64,
+        a12: f64,
+        a13: f64,
+        a21: f64,
+        a22: f64,
+        a23: f64,
+    ) -> Result<(), NErrors>;
     fn is_negative(&self) -> bool;
     fn form(&self) -> NTrsfForm;
     fn scale_factor(&self) -> f64;
@@ -34,12 +42,18 @@ pub trait Trsf2d {
     fn rotation_part(&self) -> f64;
     fn value(&self, row: i32, col: i32) -> Result<f64, NErrors>;
     fn invert(&mut self) -> Result<(), NErrors>;
-    fn inverted(&self) -> Result<Self, NErrors> where Self: Sized;
+    fn inverted(&self) -> Result<Self, NErrors>
+    where
+        Self: Sized;
     fn multiply(&mut self, t: &Self);
-    fn multiplied(&self, t: &Self) -> Self where Self: Sized;
+    fn multiplied(&self, t: &Self) -> Self
+    where
+        Self: Sized;
     fn pre_multiply(&mut self, t: &Self);
     fn power(&mut self, n: i32) -> Result<(), NErrors>;
-    fn powered(&self, n: i32) -> Result<Self, NErrors> where Self: Sized;
+    fn powered(&self, n: i32) -> Result<Self, NErrors>
+    where
+        Self: Sized;
     fn transforms_xy(&self, coord: &mut NXY);
     fn transforms_coords(&self, x: &mut f64, y: &mut f64);
     fn orthogonalize(&mut self);
@@ -48,7 +62,7 @@ pub trait Trsf2d {
 }
 
 // Struct representing a 2D transformation
-#[derive(Clone, Default,Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct NTrsf2d {
     scale: f64,
     shape: NTrsfForm,
@@ -73,10 +87,22 @@ impl Trsf2d for NTrsf2d {
         result.scale = t.scale_factor();
         result.shape = t.form();
         let m = t.h_vectorial_part();
-        result.matrix.set_value(1, 1, m.value(1, 1).unwrap()).unwrap();
-        result.matrix.set_value(1, 2, m.value(1, 2).unwrap()).unwrap();
-        result.matrix.set_value(2, 1, m.value(2, 1).unwrap()).unwrap();
-        result.matrix.set_value(2, 2, m.value(2, 2).unwrap()).unwrap();
+        result
+            .matrix
+            .set_value(1, 1, m.value(1, 1).unwrap())
+            .unwrap();
+        result
+            .matrix
+            .set_value(1, 2, m.value(1, 2).unwrap())
+            .unwrap();
+        result
+            .matrix
+            .set_value(2, 1, m.value(2, 1).unwrap())
+            .unwrap();
+        result
+            .matrix
+            .set_value(2, 2, m.value(2, 2).unwrap())
+            .unwrap();
         result.loc = NXY::new(t.translation_part().x(), t.translation_part().y());
         result
     }
@@ -100,8 +126,10 @@ impl Trsf2d for NTrsf2d {
         let vy = v.y();
         let x0 = p.x();
         let y0 = p.y();
-        self.matrix.set_col(1, &NXY::new(1.0 - 2.0 * vx * vx, -2.0 * vx * vy));
-        self.matrix.set_col(2, &NXY::new(-2.0 * vx * vy, 1.0 - 2.0 * vy * vy));
+        self.matrix
+            .set_col(1, &NXY::new(1.0 - 2.0 * vx * vx, -2.0 * vx * vy));
+        self.matrix
+            .set_col(2, &NXY::new(-2.0 * vx * vy, 1.0 - 2.0 * vy * vy));
         self.loc.set_coord(
             -2.0 * ((vx * vx - 1.0) * x0 + (vx * vy * y0)),
             -2.0 * ((vx * vy * x0) + (vy * vy - 1.0) * y0),
@@ -176,7 +204,7 @@ impl Trsf2d for NTrsf2d {
     }
 
     /// Sets the transformation to a translation between two points.
-    fn set_translation_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
+    fn set_translation_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
         self.shape = NTrsfForm::Translation;
         self.scale = 1.0;
         self.matrix = NMat2d::new_identity();
@@ -190,14 +218,24 @@ impl Trsf2d for NTrsf2d {
         let y = self.loc.y().abs();
         let loc_null = x <= gp::resolution() && y <= gp::resolution();
         if loc_null {
-            if matches!(self.shape, NTrsfForm::Identity | NTrsfForm::PntMirror | NTrsfForm::Scale | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) {
+            if matches!(
+                self.shape,
+                NTrsfForm::Identity
+                    | NTrsfForm::PntMirror
+                    | NTrsfForm::Scale
+                    | NTrsfForm::Rotation
+                    | NTrsfForm::Ax1Mirror
+            ) {
             } else if self.shape == NTrsfForm::Translation {
                 self.shape = NTrsfForm::Identity;
             } else {
                 self.shape = NTrsfForm::CompoundTrsf;
             }
         } else {
-            if matches!(self.shape, NTrsfForm::Translation | NTrsfForm::Scale | NTrsfForm::PntMirror) {
+            if matches!(
+                self.shape,
+                NTrsfForm::Translation | NTrsfForm::Scale | NTrsfForm::PntMirror
+            ) {
             } else if self.shape == NTrsfForm::Identity {
                 self.shape = NTrsfForm::Translation;
             } else {
@@ -222,7 +260,10 @@ impl Trsf2d for NTrsf2d {
                     self.shape = NTrsfForm::CompoundTrsf;
                 }
             } else {
-                if matches!(self.shape, NTrsfForm::Identity | NTrsfForm::Rotation | NTrsfForm::Scale) {
+                if matches!(
+                    self.shape,
+                    NTrsfForm::Identity | NTrsfForm::Rotation | NTrsfForm::Scale
+                ) {
                 } else if self.shape == NTrsfForm::PntMirror {
                     self.shape = NTrsfForm::Translation;
                 } else {
@@ -238,7 +279,10 @@ impl Trsf2d for NTrsf2d {
             }
         } else {
             if self.shape == NTrsfForm::Scale {
-            } else if matches!(self.shape, NTrsfForm::Identity | NTrsfForm::Translation | NTrsfForm::PntMirror) {
+            } else if matches!(
+                self.shape,
+                NTrsfForm::Identity | NTrsfForm::Translation | NTrsfForm::PntMirror
+            ) {
                 self.shape = NTrsfForm::Scale;
             } else {
                 self.shape = NTrsfForm::CompoundTrsf;
@@ -248,14 +292,22 @@ impl Trsf2d for NTrsf2d {
     }
 
     /// Sets the transformation coefficients.
-    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a21: f64, a22: f64, a23: f64) -> Result<(), NErrors> {
+    fn set_values(
+        &mut self,
+        a11: f64,
+        a12: f64,
+        a13: f64,
+        a21: f64,
+        a22: f64,
+        a23: f64,
+    ) -> Result<(), NErrors> {
         let col1 = NXY::new(a11, a21);
         let col2 = NXY::new(a12, a22);
         let col3 = NXY::new(a13, a23);
         let mut m = NMat2d::new_from_cols(&col1, &col2);
         let s = m.determinant();
-        let as = s.abs();
-        if as < gp::resolution() {
+        let _as = s.abs();
+        if _as < gp::resolution() {
             return Err(NErrors::InvalidConstructionParameters);
         }
         self.scale = if s > 0.0 { s.sqrt() } else { (-s).sqrt() };
@@ -312,7 +364,10 @@ impl Trsf2d for NTrsf2d {
 
     /// Returns the rotation angle.
     fn rotation_part(&self) -> f64 {
-        self.matrix.value(2, 1).unwrap().atan2(self.matrix.value(1, 1).unwrap())
+        self.matrix
+            .value(2, 1)
+            .unwrap()
+            .atan2(self.matrix.value(1, 1).unwrap())
     }
 
     /// Returns the coefficient at the specified row and column.
@@ -402,33 +457,52 @@ impl Trsf2d for NTrsf2d {
             self.loc.add(&t_loc);
             self.scale *= t.scale;
             self.matrix.multiply(&t.matrix);
-        } else if matches!(self.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && t.shape == NTrsfForm::Translation {
+        } else if matches!(
+            self.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && t.shape == NTrsfForm::Translation
+        {
             let mut t_loc = t.loc.clone();
             t_loc.multiply(&self.matrix);
             if self.scale != 1.0 {
                 t_loc.multiply_scalar(self.scale);
             }
             self.loc.add(&t_loc);
-        } else if (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror) && t.shape == NTrsfForm::Translation {
+        } else if (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror)
+            && t.shape == NTrsfForm::Translation
+        {
             let mut t_loc = t.loc.clone();
             t_loc.multiply_scalar(self.scale);
             self.loc.add(&t_loc);
-        } else if self.shape == NTrsfForm::Translation && matches!(t.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) {
+        } else if self.shape == NTrsfForm::Translation
+            && matches!(
+                t.shape,
+                NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+            )
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             self.scale = t.scale;
             self.loc.add(&t.loc);
             self.matrix = t.matrix.clone();
-        } else if self.shape == NTrsfForm::Translation && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror) {
+        } else if self.shape == NTrsfForm::Translation
+            && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror)
+        {
             self.shape = t.shape;
             self.loc.add(&t.loc);
             self.scale = t.scale;
-        } else if (self.shape == NTrsfForm::PntMirror || self.shape == NTrsfForm::Scale) && (t.shape == NTrsfForm::PntMirror || t.shape == NTrsfForm::Scale) {
+        } else if (self.shape == NTrsfForm::PntMirror || self.shape == NTrsfForm::Scale)
+            && (t.shape == NTrsfForm::PntMirror || t.shape == NTrsfForm::Scale)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             let mut t_loc = t.loc.clone();
             t_loc.multiply_scalar(self.scale);
             self.loc.add(&t_loc);
             self.scale *= t.scale;
-        } else if matches!(self.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror) {
+        } else if matches!(
+            self.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             let mut t_loc = t.loc.clone();
             t_loc.multiply(&self.matrix);
@@ -439,7 +513,11 @@ impl Trsf2d for NTrsf2d {
                 self.scale *= t.scale;
             }
             self.loc.add(&t_loc);
-        } else if matches!(t.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror) {
+        } else if matches!(
+            t.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             let mut t_loc = t.loc.clone();
             t_loc.multiply_scalar(self.scale);
@@ -510,11 +588,22 @@ impl Trsf2d for NTrsf2d {
             self.scale *= t.scale;
             self.loc.add(&t.loc);
             self.matrix.pre_multiply(&t.matrix);
-        } else if matches!(self.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && t.shape == NTrsfForm::Translation {
+        } else if matches!(
+            self.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && t.shape == NTrsfForm::Translation
+        {
             self.loc.add(&t.loc);
-        } else if (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror) && t.shape == NTrsfForm::Translation {
+        } else if (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror)
+            && t.shape == NTrsfForm::Translation
+        {
             self.loc.add(&t.loc);
-        } else if self.shape == NTrsfForm::Translation && matches!(t.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) {
+        } else if self.shape == NTrsfForm::Translation
+            && matches!(
+                t.shape,
+                NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+            )
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             self.matrix = t.matrix.clone();
             let mut loc_copy = self.loc.clone();
@@ -527,28 +616,40 @@ impl Trsf2d for NTrsf2d {
             }
             self.loc = loc_copy;
             self.loc.add(&t.loc);
-        } else if (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror) && self.shape == NTrsfForm::Translation {
+        } else if (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror)
+            && self.shape == NTrsfForm::Translation
+        {
             let mut loc_copy = self.loc.clone();
             loc_copy.multiply_scalar(t.scale);
             self.loc = loc_copy;
             self.loc.add(&t.loc);
             self.scale = t.scale;
             self.shape = t.shape;
-        } else if (self.shape == NTrsfForm::PntMirror || self.shape == NTrsfForm::Scale) && (t.shape == NTrsfForm::PntMirror || t.shape == NTrsfForm::Scale) {
+        } else if (self.shape == NTrsfForm::PntMirror || self.shape == NTrsfForm::Scale)
+            && (t.shape == NTrsfForm::PntMirror || t.shape == NTrsfForm::Scale)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             let mut loc_copy = self.loc.clone();
             loc_copy.multiply_scalar(t.scale);
             self.loc = loc_copy;
             self.loc.add(&t.loc);
             self.scale *= t.scale;
-        } else if matches!(self.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror) {
+        } else if matches!(
+            self.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && (t.shape == NTrsfForm::Scale || t.shape == NTrsfForm::PntMirror)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             let mut loc_copy = self.loc.clone();
             loc_copy.multiply_scalar(t.scale);
             self.loc = loc_copy;
             self.loc.add(&t.loc);
             self.scale *= t.scale;
-        } else if matches!(t.shape, NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror) && (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror) {
+        } else if matches!(
+            t.shape,
+            NTrsfForm::CompoundTrsf | NTrsfForm::Rotation | NTrsfForm::Ax1Mirror
+        ) && (self.shape == NTrsfForm::Scale || self.shape == NTrsfForm::PntMirror)
+        {
             self.shape = NTrsfForm::CompoundTrsf;
             self.matrix = t.matrix.clone();
             let mut loc_copy = self.loc.clone();
@@ -771,7 +872,8 @@ impl Trsf2d for NTrsf2d {
             indent,
             self.loc.x(),
             self.loc.y()
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(
             out,
             "{}   \"matrix\": [{}, {}, {}, {}],",
@@ -780,7 +882,8 @@ impl Trsf2d for NTrsf2d {
             self.matrix.value(1, 2).unwrap(),
             self.matrix.value(2, 1).unwrap(),
             self.matrix.value(2, 2).unwrap()
-        ).unwrap();
+        )
+        .unwrap();
         writeln!(out, "{}   \"shape\": {},", indent, self.shape as i32).unwrap();
         writeln!(out, "{}   \"scale\": {}", indent, self.scale).unwrap();
         writeln!(out, "{} }}", indent).unwrap();
@@ -795,12 +898,20 @@ impl Trsf2d for NTrsf2d {
         self.set_translation_vec(&NVec2d::new(loc.x(), loc.y()));
 
         let mut matrix_vals = [0.0; 4];
-        if !Self::init_vector_class(json, pos, "matrix", 4, &mut matrix_vals.iter_mut().collect::<Vec<_>>()) {
+        if !Self::init_vector_class(
+            json,
+            pos,
+            "matrix",
+            4,
+            &mut matrix_vals.iter_mut().collect::<Vec<_>>(),
+        ) {
             return false;
         }
         for i in 0..2 {
             for j in 0..2 {
-                self.matrix.set_value(i + 1, j + 1, matrix_vals[i * 2 + j]).unwrap();
+                self.matrix
+                    .set_value(i + 1, j + 1, matrix_vals[i * 2 + j])
+                    .unwrap();
             }
         }
 
@@ -832,7 +943,13 @@ impl Trsf2d for NTrsf2d {
 
 impl NTrsf2d {
     /// Helper method to parse vector class from JSON.
-    fn init_vector_class(json: &str, pos: &mut usize, name: &str, count: usize, vals: &mut [&mut f64]) -> bool {
+    fn init_vector_class(
+        json: &str,
+        pos: &mut usize,
+        name: &str,
+        count: usize,
+        vals: &mut [&mut f64],
+    ) -> bool {
         let search = format!("\"{}\": [", name);
         if let Some(start) = json[*pos..].find(&search) {
             *pos += start + search.len();

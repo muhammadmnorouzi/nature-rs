@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 use super::prelude::*;
-use crate::nature_errors::NErrors;
+use crate::nature_common::prelude::*;
 
 /// Trait ponts, providing coordinate manipulation, geometric operations, and transformations.
 pub trait Point2d

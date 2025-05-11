@@ -227,7 +227,8 @@ impl Dir2d for NDir2d {
     }
 
     fn rotate(&mut self, angle: f64) {
-        let trsf = NTrsf2d::new_rotation(&NPoint2d::new(0.0, 0.0), angle).expect("Invalid rotation");
+        let trsf =
+            NTrsf2d::new_rotation(&NPoint2d::new(0.0, 0.0), angle).expect("Invalid rotation");
         self.transform(&trsf);
     }
 

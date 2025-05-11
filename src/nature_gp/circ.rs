@@ -39,8 +39,8 @@ pub trait Circ {
     fn transformed(&self, transformation: &NTrsf) -> Self;
     fn translate_vec(&mut self, vector: &NVec);
     fn translated_vec(&self, vector: &NVec) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d);
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d);
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
 }
 
 // Struct representing a circle in 3D space
@@ -202,13 +202,13 @@ impl Circ for NCirc {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.pos.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d) {
+        self.pos.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -255,7 +255,10 @@ mod tests {
     #[test]
     fn test_setters() {
         let mut circ = circ((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let new_axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let new_axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         circ.set_axis(&new_axis).unwrap();
         assert_eq!(circ.axis().direction(), &NDir::new(0.0, 1.0, 0.0).unwrap());
 
@@ -324,7 +327,10 @@ mod tests {
     #[test]
     fn test_mirror_ax1() {
         let mut circ = circ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         circ.mirror_ax1(&axis);
         assert_eq!(circ.location(), &NPoint3d::new(1.0, 0.0, 0.0));
         assert_eq!(circ.axis().direction(), &NDir::new(0.0, 0.0, -1.0).unwrap());
@@ -349,7 +355,10 @@ mod tests {
     #[test]
     fn test_rotate() {
         let mut circ = circ((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 0.0, 1.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 0.0, 1.0).unwrap(),
+        );
         circ.rotate(&axis, PI / 2.0);
         assert!((circ.location().x() + 1.0).abs() < 1e-5);
         assert!((circ.location().y() - 0.0).abs() < 1e-5);
@@ -393,11 +402,11 @@ mod tests {
     }
 
     #[test]
-    fn test_translate_pnts() {
+    fn test_translate_point3d() {
         let mut circ = circ((1.0, 2.0, 3.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
         let p1 = NPoint3d::new(0.0, 0.0, 0.0);
         let p2 = NPoint3d::new(1.0, 1.0, 1.0);
-        circ.translate_pnts(&p1, &p2);
+        circ.translate_point3d(&p1, &p2);
         assert_eq!(circ.location(), &NPoint3d::new(2.0, 3.0, 4.0));
         assert_eq!(circ.radius(), 5.0);
     }

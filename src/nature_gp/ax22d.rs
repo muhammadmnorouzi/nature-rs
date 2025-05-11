@@ -36,8 +36,8 @@ pub trait Ax22d {
     fn transformed(&self, transformation: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, vector: &NVec2d);
     fn translated_vec(&self, vector: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d);
-    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint2d, to: &NPoint2d);
+    fn translated_point3d(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
 }
 
 // Struct representing a 2D coordinate system (right- or left-handed)
@@ -248,13 +248,13 @@ impl Ax22d for NAx22d {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d) {
-        self.point.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint2d, to: &NPoint2d) {
+        self.point.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
+    fn translated_point3d(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -283,14 +283,20 @@ mod tests {
 
     #[test]
     fn test_new_with_sense() {
-        let ax =
-            NAx22d::new_with_sense(NPoint2d::new(1.0, 2.0), NDir2d::new(1.0, 0.0).unwrap(), true);
+        let ax = NAx22d::new_with_sense(
+            NPoint2d::new(1.0, 2.0),
+            NDir2d::new(1.0, 0.0).unwrap(),
+            true,
+        );
         assert_eq!(ax.location(), &NPoint2d::new(1.0, 2.0));
         assert_eq!(ax.x_direction(), &NDir2d::new(1.0, 0.0).unwrap());
         assert_eq!(ax.y_direction(), &NDir2d::new(0.0, 1.0).unwrap());
 
-        let ax_left =
-            NAx22d::new_with_sense(NPoint2d::new(1.0, 2.0), NDir2d::new(1.0, 0.0).unwrap(), false);
+        let ax_left = NAx22d::new_with_sense(
+            NPoint2d::new(1.0, 2.0),
+            NDir2d::new(1.0, 0.0).unwrap(),
+            false,
+        );
         assert_eq!(ax_left.y_direction(), &NDir2d::new(0.0, -1.0).unwrap());
     }
 
@@ -419,11 +425,11 @@ mod tests {
     }
 
     #[test]
-    fn test_translate_pnts() {
+    fn test_translate_point3d() {
         let mut ax = ax22d((1.0, 2.0), (1.0, 0.0), (0.0, 1.0));
         let p1 = NPoint2d::new(0.0, 0.0);
         let p2 = NPoint2d::new(1.0, 1.0);
-        ax.translate_pnts(&p1, &p2);
+        ax.translate_point3d(&p1, &p2);
         assert_eq!(ax.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(ax.x_direction(), &NDir2d::new(1.0, 0.0).unwrap());
     }

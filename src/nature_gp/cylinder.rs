@@ -38,8 +38,8 @@ pub trait Cylinder {
     fn transformed(&self, transformation: &NTrsf) -> Self;
     fn translate_vec(&mut self, vector: &NVec);
     fn translated_vec(&self, vector: &NVec) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d);
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d);
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
 }
 
 // Struct representing an infinite cylindrical surface in 3D space
@@ -211,13 +211,13 @@ impl Cylinder for NCylinder {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.pos.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d) {
+        self.pos.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -266,7 +266,10 @@ mod tests {
     #[test]
     fn test_setters() {
         let mut cyl = cylinder((0.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let new_axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let new_axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         cyl.set_axis(&new_axis).unwrap();
         assert_eq!(cyl.axis().direction(), &NDir::new(0.0, 1.0, 0.0).unwrap());
 
@@ -339,7 +342,10 @@ mod tests {
     #[test]
     fn test_mirror_ax1() {
         let mut cyl = cylinder((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         cyl.mirror_ax1(&axis);
         assert_eq!(cyl.location(), &NPoint3d::new(1.0, 0.0, 0.0));
         assert_eq!(cyl.axis().direction(), &NDir::new(0.0, 0.0, -1.0).unwrap());
@@ -364,7 +370,10 @@ mod tests {
     #[test]
     fn test_rotate() {
         let mut cyl = cylinder((1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 0.0, 1.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 0.0, 1.0).unwrap(),
+        );
         cyl.rotate(&axis, PI / 2.0);
         assert!((cyl.location().x() + 1.0).abs() < 1e-5);
         assert!((cyl.location().y() - 0.0).abs() < 1e-5);
@@ -408,11 +417,11 @@ mod tests {
     }
 
     #[test]
-    fn test_translate_pnts() {
+    fn test_translate_point3d() {
         let mut cyl = cylinder((1.0, 2.0, 3.0), (0.0, 0.0, 1.0), (1.0, 0.0, 0.0), 5.0);
         let p1 = NPoint3d::new(0.0, 0.0, 0.0);
         let p2 = NPoint3d::new(1.0, 1.0, 1.0);
-        cyl.translate_pnts(&p1, &p2);
+        cyl.translate_point3d(&p1, &p2);
         assert_eq!(cyl.location(), &NPoint3d::new(2.0, 3.0, 4.0));
         assert_eq!(cyl.radius(), 5.0);
     }

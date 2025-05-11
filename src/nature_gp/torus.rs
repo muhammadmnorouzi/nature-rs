@@ -3,7 +3,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NAx1, NAx2, NAx3, NPoint3d, NTrsf, NVec, NErrors};
+use crate::gp::{NAx1, NAx2, NAx3, NErrors, NPoint3d, NTrsf, NVec};
 
 // Assuming gp::resolution and constants are defined elsewhere
 mod gp {
@@ -56,8 +56,8 @@ pub trait Torus {
     fn transformed(&self, t: NTrsf) -> Self;
     fn translate_vec(&mut self, v: NVec);
     fn translated_vec(&self, v: NVec) -> Self;
-    fn translate_pnts(&mut self, p1: NPoint3d, p2: NPoint3d);
-    fn translated_pnts(&self, p1: NPoint3d, p2: NPoint3d) -> Self;
+    fn translate_point3d(&mut self, p1: NPoint3d, p2: NPoint3d);
+    fn translated_point3d(&self, p1: NPoint3d, p2: NPoint3d) -> Self;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
 }
 
@@ -73,7 +73,11 @@ impl Torus for NTorus {
     /// Creates an indefinite torus.
     fn new() -> Self {
         NTorus {
-            pos: NAx3::new(NPoint3d::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
+            pos: NAx3::new(
+                NPoint3d::new(0.0, 0.0, 0.0),
+                NVec::new(0.0, 0.0, 1.0),
+                NVec::new(1.0, 0.0, 0.0),
+            ),
             major_radius: gp::real_last(),
             minor_radius: gp::real_small(),
         }
@@ -184,8 +188,10 @@ impl Torus for NTorus {
         let tcol2_tcol4 = t12 * t14 + t22 * t24 + t32 * t34;
         let tcol3_tcol4 = t13 * t14 + t23 * t24 + t33 * t34;
 
-        let sum_radius = self.major_radius * self.major_radius + self.minor_radius * self.minor_radius;
-        let sub_radius = self.major_radius * self.major_radius - self.minor_radius * self.minor_radius;
+        let sum_radius =
+            self.major_radius * self.major_radius + self.minor_radius * self.minor_radius;
+        let sub_radius =
+            self.major_radius * self.major_radius - self.minor_radius * self.minor_radius;
 
         coef[0] = tcol1sq * tcol1sq; // X^4
         coef[1] = tcol2sq * tcol2sq; // Y^4
@@ -211,28 +217,44 @@ impl Torus for NTorus {
         coef[21] = 4.0 * (tcol2sq * tcol3_tcol4 + 2.0 * tcol2_tcol4 * tcol2_tcol3); // Y^2*Z
         coef[22] = 4.0 * (tcol3sq * tcol1_tcol4 + 2.0 * tcol3_tcol4 * tcol1_tcol3); // X*Z^2
         coef[23] = 4.0 * (tcol3sq * tcol2_tcol4 + 2.0 * tcol3_tcol4 * tcol2_tcol3); // Y*Z^2
-        coef[24] = 8.0 * (tcol1_tcol2 * tcol3_tcol4 + tcol2_tcol3 * tcol1_tcol4 + tcol2_tcol4 * tcol1_tcol3); // X*Y*Z
-        coef[25] = 2.0 * (sub_radius * t31 * t31 - sum_radius * (t11 * t11 + t21 * t21)
-                         + tcol4sq * tcol1sq + 2.0 * tcol1_tcol4 * tcol1_tcol4); // X^2
-        coef[26] = 2.0 * (sub_radius * t32 * t32 - sum_radius * (t12 * t12 + t22 * t22)
-                         + tcol4sq * tcol2sq + 2.0 * tcol2_tcol4 * tcol2_tcol4); // Y^2
-        coef[27] = 2.0 * (sub_radius * t33 * t33 - sum_radius * (t13 * t13 + t23 * t23)
-                         + tcol4sq * tcol3sq + 2.0 * tcol3_tcol4 * tcol3_tcol4); // Z^2
-        coef[28] = 4.0 * (sub_radius * t31 * t32 - sum_radius * (t11 * t12 + t21 * t22)
-                         + tcol4sq * tcol1_tcol2 + 2.0 * tcol1_tcol4 * tcol2_tcol4); // X*Y
-        coef[29] = 4.0 * (sub_radius * t31 * t33 - sum_radius * (t11 * t13 + t21 * t23)
-                         + tcol4sq * tcol1_tcol3 + 2.0 * tcol1_tcol4 * tcol3_tcol4); // X*Z
-        coef[30] = 4.0 * (sub_radius * t32 * t33 - sum_radius * (t12 * t13 + t22 * t23)
-                         + tcol4sq * tcol2_tcol3 + 2.0 * tcol2_tcol4 * tcol3_tcol4); // Y*Z
-        coef[31] = 4.0 * (tcol4sq * tcol1_tcol4 + sub_radius * t31 * t34
-                         - sum_radius * (t11 * t14 + t21 * t24)); // X
-        coef[32] = 4.0 * (tcol4sq * tcol2_tcol4 + sub_radius * t32 * t34
-                         - sum_radius * (t12 * t14 + t22 * t24)); // Y
-        coef[33] = 4.0 * (tcol4sq * tcol3_tcol4 + sub_radius * t33 * t34
-                         - sum_radius * (t13 * t14 + t23 * t24)); // Z
-        coef[34] = 2.0 * sub_radius * t34 * t34
-                  - 2.0 * sum_radius * (t14 * t14 + t24 * t24)
-                  + tcol4sq * tcol4sq + sub_radius * sub_radius;
+        coef[24] = 8.0
+            * (tcol1_tcol2 * tcol3_tcol4 + tcol2_tcol3 * tcol1_tcol4 + tcol2_tcol4 * tcol1_tcol3); // X*Y*Z
+        coef[25] = 2.0
+            * (sub_radius * t31 * t31 - sum_radius * (t11 * t11 + t21 * t21)
+                + tcol4sq * tcol1sq
+                + 2.0 * tcol1_tcol4 * tcol1_tcol4); // X^2
+        coef[26] = 2.0
+            * (sub_radius * t32 * t32 - sum_radius * (t12 * t12 + t22 * t22)
+                + tcol4sq * tcol2sq
+                + 2.0 * tcol2_tcol4 * tcol2_tcol4); // Y^2
+        coef[27] = 2.0
+            * (sub_radius * t33 * t33 - sum_radius * (t13 * t13 + t23 * t23)
+                + tcol4sq * tcol3sq
+                + 2.0 * tcol3_tcol4 * tcol3_tcol4); // Z^2
+        coef[28] = 4.0
+            * (sub_radius * t31 * t32 - sum_radius * (t11 * t12 + t21 * t22)
+                + tcol4sq * tcol1_tcol2
+                + 2.0 * tcol1_tcol4 * tcol2_tcol4); // X*Y
+        coef[29] = 4.0
+            * (sub_radius * t31 * t33 - sum_radius * (t11 * t13 + t21 * t23)
+                + tcol4sq * tcol1_tcol3
+                + 2.0 * tcol1_tcol4 * tcol3_tcol4); // X*Z
+        coef[30] = 4.0
+            * (sub_radius * t32 * t33 - sum_radius * (t12 * t13 + t22 * t23)
+                + tcol4sq * tcol2_tcol3
+                + 2.0 * tcol2_tcol4 * tcol3_tcol4); // Y*Z
+        coef[31] = 4.0
+            * (tcol4sq * tcol1_tcol4 + sub_radius * t31 * t34
+                - sum_radius * (t11 * t14 + t21 * t24)); // X
+        coef[32] = 4.0
+            * (tcol4sq * tcol2_tcol4 + sub_radius * t32 * t34
+                - sum_radius * (t12 * t14 + t22 * t24)); // Y
+        coef[33] = 4.0
+            * (tcol4sq * tcol3_tcol4 + sub_radius * t33 * t34
+                - sum_radius * (t13 * t14 + t23 * t24)); // Z
+        coef[34] = 2.0 * sub_radius * t34 * t34 - 2.0 * sum_radius * (t14 * t14 + t24 * t24)
+            + tcol4sq * tcol4sq
+            + sub_radius * sub_radius;
 
         Ok(())
     }
@@ -367,12 +389,12 @@ impl Torus for NTorus {
     }
 
     /// Translates the torus from one point to another.
-    fn translate_pnts(&mut self, p1: NPoint3d, p2: NPoint3d) {
+    fn translate_point3d(&mut self, p1: NPoint3d, p2: NPoint3d) {
         self.pos.translate(p1, p2);
     }
 
     /// Returns a translated torus from one point to another.
-    fn translated_pnts(&self, p1: NPoint3d, p2: NPoint3d) -> Self {
+    fn translated_point3d(&self, p1: NPoint3d, p2: NPoint3d) -> Self {
         let mut c = self.clone();
         c.pos.translate(p1, p2);
         c
@@ -397,10 +419,15 @@ mod tests {
 
     fn create_test_torus() -> NTorus {
         NTorus::new_with_params(
-            NAx3::new(NPoint3d::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
+            NAx3::new(
+                NPoint3d::new(0.0, 0.0, 0.0),
+                NVec::new(0.0, 0.0, 1.0),
+                NVec::new(1.0, 0.0, 0.0),
+            ),
             10.0,
             2.0,
-        ).unwrap()
+        )
+        .unwrap()
     }
 
     #[test]

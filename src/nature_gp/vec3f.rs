@@ -399,7 +399,8 @@ impl NVec3f {
             self.coord.x(),
             self.coord.y(),
             self.coord.z()
-        ).unwrap();
+        )
+        .unwrap();
     }
 
     /// Initializes the vector from JSON.
@@ -476,10 +477,7 @@ mod tests {
         assert_eq!(v1.subtracted(&v2).coords(), (-3.0, -3.0, -3.0));
         assert_eq!(v1.multiplied(2.0).coords(), (2.0, 4.0, 6.0));
         assert_eq!(v1.dot(&v2), 32.0);
-        assert_eq!(
-            v1.crossed(&v2).coords(),
-            (-3.0, 6.0, -3.0)
-        );
+        assert_eq!(v1.crossed(&v2).coords(), (-3.0, 6.0, -3.0));
     }
 
     #[test]

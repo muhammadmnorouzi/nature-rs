@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NQuaternion, NTrsf, NXYZ, NErrors};
+use crate::gp::{NErrors, NQuaternion, NTrsf, NXYZ};
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -149,9 +149,11 @@ impl Lerp for NTrsfNLerp {
     fn init(&mut self, start: NTrsf, end: NTrsf) {
         self.trsf_start = start.clone();
         self.trsf_end = end.clone();
-        self.loc_lerp.init(start.translation_part(), end.translation_part());
+        self.loc_lerp
+            .init(start.translation_part(), end.translation_part());
         self.rot_lerp.init(start.get_rotation(), end.get_rotation());
-        self.scale_lerp.init(start.scale_factor(), end.scale_factor());
+        self.scale_lerp
+            .init(start.scale_factor(), end.scale_factor());
     }
 
     fn interpolate(&self, t: f64, result: &mut NTrsf) -> Result<(), NErrors> {
@@ -265,7 +267,9 @@ mod tests {
     #[test]
     fn test_quaternion_nlerp() {
         let start = NQuaternion::new_from_axis_angle(&NXYZ::new(0.0, 0.0, 1.0), 0.0).unwrap();
-        let end = NQuaternion::new_from_axis_angle(&NXYZ::new(0.0, 0.0, 1.0), std::f64::consts::PI / 2.0).unwrap();
+        let end =
+            NQuaternion::new_from_axis_angle(&NXYZ::new(0.0, 0.0, 1.0), std::f64::consts::PI / 2.0)
+                .unwrap();
         let mut lerp = NQuaternionNLerp::new(start.clone(), end.clone());
         let mut result = NQuaternion::new();
 
@@ -276,7 +280,9 @@ mod tests {
         assert!((result.dot(&end) - 1.0).abs() < gp::resolution());
 
         lerp.interpolate(0.5, &mut result).unwrap();
-        let expected = NQuaternion::new_from_axis_angle(&NXYZ::new(0.0, 0.0, 1.0), std::f64::consts::PI / 4.0).unwrap();
+        let expected =
+            NQuaternion::new_from_axis_angle(&NXYZ::new(0.0, 0.0, 1.0), std::f64::consts::PI / 4.0)
+                .unwrap();
         assert!((result.dot(&expected) - 1.0).abs() < gp::resolution());
     }
 }

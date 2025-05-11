@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use nature_errors::NErrors;
 
-use crate::gp::{NPoint3d, NVec, NAx1, NAx2, NAx3, NTrsf};
+use crate::gp::{NAx1, NAx2, NAx3, NPoint3d, NTrsf, NVec};
 
 // Trait to define the behavior of a sphere
 pub trait Sphere {
@@ -382,7 +382,9 @@ mod tests {
         let mut c2 = 0.0;
         let mut c3 = 0.0;
         let mut d = 0.0;
-        sphere.coefficients(&mut a1, &mut a2, &mut a3, &mut b1, &mut b2, &mut b3, &mut c1, &mut c2, &mut c3, &mut d);
+        sphere.coefficients(
+            &mut a1, &mut a2, &mut a3, &mut b1, &mut b2, &mut b3, &mut c1, &mut c2, &mut c3, &mut d,
+        );
         assert!((a1 - 1.0).abs() < 1e-9);
         assert!((a2 - 1.0).abs() < 1e-9);
         assert!((a3 - 1.0).abs() < 1e-9);

@@ -45,8 +45,8 @@ pub trait Circ2d {
     fn transformed(&self, transformation: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, vector: &NVec2d);
     fn translated_vec(&self, vector: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d);
-    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint2d, to: &NPoint2d);
+    fn translated_point3d(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
 }
 
 // Struct representing a circle in 2D space
@@ -242,13 +242,13 @@ impl Circ2d for NCirc2d {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d) {
-        self.pos.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint2d, to: &NPoint2d) {
+        self.pos.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
+    fn translated_point3d(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -437,11 +437,11 @@ mod tests {
     }
 
     #[test]
-    fn test_translate_pnts() {
+    fn test_translate_point3d() {
         let mut circ = circ2d((1.0, 2.0), (1.0, 0.0), (0.0, 1.0), 5.0);
         let p1 = NPoint2d::new(0.0, 0.0);
         let p2 = NPoint2d::new(1.0, 1.0);
-        circ.translate_pnts(&p1, &p2);
+        circ.translate_point3d(&p1, &p2);
         assert_eq!(circ.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(circ.radius(), 5.0);
     }

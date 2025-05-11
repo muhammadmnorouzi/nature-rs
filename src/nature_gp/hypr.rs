@@ -71,8 +71,8 @@ pub trait Hypr {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -412,14 +412,14 @@ impl Hypr for NHypr {
     }
 
     /// Translates the hyperbola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
     /// Returns a translated hyperbola from one point to another.
-    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut h = self.clone();
-        h.translate_pnts(p1, p2);
+        h.translate_point3d(p1, p2);
         h
     }
 
@@ -551,7 +551,12 @@ mod tests {
         assert_eq!(h_scaled.minor_radius(), 2.0);
 
         let mut h_mirrored = h.mirrored_pnt(&NPoint3d::new(1.0, 0.0, 0.0));
-        assert!(h_mirrored.location().distance(&NPoint3d::new(2.0, 0.0, 0.0)) < 1e-9);
+        assert!(
+            h_mirrored
+                .location()
+                .distance(&NPoint3d::new(2.0, 0.0, 0.0))
+                < 1e-9
+        );
     }
 
     #[test]

@@ -62,8 +62,8 @@ pub trait Parab2d {
     fn translated_vec(&self, v: &NVec2d) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -324,14 +324,14 @@ impl Parab2d for NParab2d {
     }
 
     /// Translates the parabola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
-        self.pos.translate_pnts(p1, p2);
+    fn translate_point3d(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
+        self.pos.translate_point3d(p1, p2);
     }
 
     /// Returns the parabola translated from one point to another.
-    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
+    fn translated_point3d(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut prb = self.clone();
-        prb.translate_pnts(p1, p2);
+        prb.translate_point3d(p1, p2);
         prb
     }
 

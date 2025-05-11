@@ -43,8 +43,8 @@ pub trait Cone {
     fn transformed(&self, transformation: &NTrsf) -> Self;
     fn translate_vec(&mut self, vector: &NVec);
     fn translated_vec(&self, vector: &NVec) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d);
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d);
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
 }
 
 // Struct representing an infinite conical surface in 3D space
@@ -253,13 +253,13 @@ impl Cone for NCone {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.pos.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d) {
+        self.pos.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
@@ -325,7 +325,10 @@ mod tests {
             PI / 4.0,
             5.0,
         );
-        let new_axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let new_axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         cone.set_axis(&new_axis).unwrap();
         assert_eq!(cone.axis().direction(), &NDir::new(0.0, 1.0, 0.0).unwrap());
 
@@ -470,7 +473,10 @@ mod tests {
             PI / 4.0,
             5.0,
         );
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 1.0, 0.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 1.0, 0.0).unwrap(),
+        );
         cone.mirror_ax1(&axis);
         assert_eq!(cone.location(), &NPoint3d::new(1.0, 0.0, 0.0));
         assert_eq!(cone.axis().direction(), &NDir::new(0.0, 0.0, -1.0).unwrap());
@@ -507,7 +513,10 @@ mod tests {
             PI / 4.0,
             5.0,
         );
-        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), NDir::new(0.0, 0.0, 1.0).unwrap());
+        let axis = NAx1::new(
+            NPoint3d::new(0.0, 0.0, 0.0),
+            NDir::new(0.0, 0.0, 1.0).unwrap(),
+        );
         cone.rotate(&axis, PI / 2.0);
         assert!((cone.location().x() + 1.0).abs() < 1e-5);
         assert!((cone.location().y() - 0.0).abs() < 1e-5);
@@ -572,7 +581,7 @@ mod tests {
     }
 
     #[test]
-    fn test_translate_pnts() {
+    fn test_translate_point3d() {
         let mut cone = cone(
             (1.0, 2.0, 3.0),
             (0.0, 0.0, 1.0),
@@ -582,7 +591,7 @@ mod tests {
         );
         let p1 = NPoint3d::new(0.0, 0.0, 0.0);
         let p2 = NPoint3d::new(1.0, 1.0, 1.0);
-        cone.translate_pnts(&p1, &p2);
+        cone.translate_point3d(&p1, &p2);
         assert_eq!(cone.location(), &NPoint3d::new(2.0, 3.0, 4.0));
         assert_eq!(cone.ref_radius(), 5.0);
         assert_eq!(cone.semi_angle(), PI / 4.0);

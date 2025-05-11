@@ -41,8 +41,8 @@ pub trait Ax2 {
     fn transformed(&self, transformation: &NTrsf) -> Self;
     fn translate_vec(&mut self, vector: &NVec);
     fn translated_vec(&self, vector: &NVec) -> Self;
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d);
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d);
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self;
 }
 
 // Struct representing a right-handed coordinate system in 3D space
@@ -323,13 +323,13 @@ impl Ax2 for NAx2 {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.axis.translate_pnts(from, to);
+    fn translate_point3d(&mut self, from: &NPoint3d, to: &NPoint3d) {
+        self.axis.translate_point3d(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
+    fn translated_point3d(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
         let mut result = self.clone();
-        result.translate_pnts(from, to);
+        result.translate_point3d(from, to);
         result
     }
 }
