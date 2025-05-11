@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NQuaternion, NTrsf, NXYZ, NatureError};
+use crate::gp::{NQuaternion, NTrsf, NXYZ, NErrors};
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -16,7 +16,7 @@ pub trait Lerp {
     fn init(&mut self, start: Self::Output, end: Self::Output);
 
     /// Compute the interpolated value at parameter t in [0, 1].
-    fn interpolate(&self, t: f64, result: &mut Self::Output) -> Result<(), NatureError>;
+    fn interpolate(&self, t: f64, result: &mut Self::Output) -> Result<(), NErrors>;
 }
 
 /// Linear interpolation for 3D coordinates (NXYZ).
@@ -34,9 +34,9 @@ impl Lerp for NXYZLerp {
         self.end = end;
     }
 
-    fn interpolate(&self, t: f64, result: &mut NXYZ) -> Result<(), NatureError> {
+    fn interpolate(&self, t: f64, result: &mut NXYZ) -> Result<(), NErrors> {
         if t < 0.0 || t > 1.0 {
-            return Err(NatureError::InvalidParameter);
+            return Err(NErrors::InvalidParameter);
         }
         result.set_coord(
             self.start.x() + t * (self.end.x() - self.start.x()),
@@ -68,9 +68,9 @@ impl Lerp for F64Lerp {
         self.end = end;
     }
 
-    fn interpolate(&self, t: f64, result: &mut f64) -> Result<(), NatureError> {
+    fn interpolate(&self, t: f64, result: &mut f64) -> Result<(), NErrors> {
         if t < 0.0 || t > 1.0 {
-            return Err(NatureError::InvalidParameter);
+            return Err(NErrors::InvalidParameter);
         }
         *result = self.start + t * (self.end - self.start);
         Ok(())
@@ -98,9 +98,9 @@ impl Lerp for NQuaternionNLerp {
         self.end = end;
     }
 
-    fn interpolate(&self, t: f64, result: &mut NQuaternion) -> Result<(), NatureError> {
+    fn interpolate(&self, t: f64, result: &mut NQuaternion) -> Result<(), NErrors> {
         if t < 0.0 || t > 1.0 {
-            return Err(NatureError::InvalidParameter);
+            return Err(NErrors::InvalidParameter);
         }
         // Compute dot product to determine shortest path
         let dot = self.start.dot(&self.end);
@@ -154,9 +154,9 @@ impl Lerp for NTrsfNLerp {
         self.scale_lerp.init(start.scale_factor(), end.scale_factor());
     }
 
-    fn interpolate(&self, t: f64, result: &mut NTrsf) -> Result<(), NatureError> {
+    fn interpolate(&self, t: f64, result: &mut NTrsf) -> Result<(), NErrors> {
         if t < 0.0 || t > 1.0 {
-            return Err(NatureError::InvalidParameter);
+            return Err(NErrors::InvalidParameter);
         }
         if (t - 0.0).abs() < gp::resolution() {
             *result = self.trsf_start.clone();
@@ -201,7 +201,7 @@ impl NTrsfNLerp {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gp::{NPnt, NVec};
+    use crate::gp::{NPoint3d, NVec};
 
     #[test]
     fn test_nxyz_lerp() {

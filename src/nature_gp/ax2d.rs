@@ -2,16 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     nature_errors::NErrors,
-    nature_gp::{NDir2d, NGP, NPnt2d, NTrsf2d, NVec2d},
+    nature_gp::{NDir2d, NGP, NPoint2d, NTrsf2d, NVec2d},
 };
 
 // Trait to define the behavior of an axis in 2D space
 pub trait Ax2d {
-    fn new(location: NPnt2d, direction: NDir2d) -> Self;
+    fn new(location: NPoint2d, direction: NDir2d) -> Self;
     fn x_axis() -> Self;
-    fn set_location(&mut self, location: NPnt2d);
+    fn set_location(&mut self, location: NPoint2d);
     fn set_direction(&mut self, direction: NDir2d);
-    fn location(&self) -> &NPnt2d;
+    fn location(&self) -> &NPoint2d;
     fn direction(&self) -> &NDir2d;
     fn is_coaxial(&self, other: &Self, angular_tolerance: f64, linear_tolerance: f64) -> bool;
     fn is_normal(&self, other: &Self, angular_tolerance: f64) -> bool;
@@ -20,26 +20,26 @@ pub trait Ax2d {
     fn angle(&self, other: &Self) -> f64;
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
-    fn mirror_pnt(&mut self, point: &NPnt2d);
-    fn mirrored_pnt(&self, point: &NPnt2d) -> Self;
+    fn mirror_pnt(&mut self, point: &NPoint2d);
+    fn mirrored_pnt(&self, point: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, axis: &Self);
     fn mirrored_ax2d(&self, axis: &Self) -> Self;
-    fn rotate(&mut self, point: &NPnt2d, angle: f64);
-    fn rotated(&self, point: &NPnt2d, angle: f64) -> Self;
-    fn scale(&mut self, point: &NPnt2d, factor: f64);
-    fn scaled(&self, point: &NPnt2d, factor: f64) -> Self;
+    fn rotate(&mut self, point: &NPoint2d, angle: f64);
+    fn rotated(&self, point: &NPoint2d, angle: f64) -> Self;
+    fn scale(&mut self, point: &NPoint2d, factor: f64);
+    fn scaled(&self, point: &NPoint2d, factor: f64) -> Self;
     fn transform(&mut self, transformation: &NTrsf2d);
     fn transformed(&self, transformation: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, vector: &NVec2d);
     fn translated_vec(&self, vector: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, from: &NPnt2d, to: &NPnt2d);
-    fn translated_pnts(&self, from: &NPnt2d, to: &NPnt2d) -> Self;
+    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d);
+    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
 }
 
 // Struct representing an axis in 2D space
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct NAx2d {
-    loc: NPnt2d,
+    loc: NPoint2d,
     vdir: NDir2d,
 }
 
@@ -50,7 +50,7 @@ impl Default for NAx2d {
 }
 
 impl Ax2d for NAx2d {
-    fn new(location: NPnt2d, direction: NDir2d) -> Self {
+    fn new(location: NPoint2d, direction: NDir2d) -> Self {
         NAx2d {
             loc: location,
             vdir: direction,
@@ -59,12 +59,12 @@ impl Ax2d for NAx2d {
 
     fn x_axis() -> Self {
         NAx2d {
-            loc: NPnt2d::new(0.0, 0.0),
+            loc: NPoint2d::new(0.0, 0.0),
             vdir: NDir2d::new(1.0, 0.0).expect("Invalid direction"),
         }
     }
 
-    fn set_location(&mut self, location: NPnt2d) {
+    fn set_location(&mut self, location: NPoint2d) {
         self.loc = location;
     }
 
@@ -72,7 +72,7 @@ impl Ax2d for NAx2d {
         self.vdir = direction;
     }
 
-    fn location(&self) -> &NPnt2d {
+    fn location(&self) -> &NPoint2d {
         &self.loc
     }
 
@@ -121,12 +121,12 @@ impl Ax2d for NAx2d {
         }
     }
 
-    fn mirror_pnt(&mut self, point: &NPnt2d) {
+    fn mirror_pnt(&mut self, point: &NPoint2d) {
         self.loc.mirror_pnt(point);
         self.vdir.reverse();
     }
 
-    fn mirrored_pnt(&self, point: &NPnt2d) -> Self {
+    fn mirrored_pnt(&self, point: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.mirror_pnt(point);
         result
@@ -143,25 +143,25 @@ impl Ax2d for NAx2d {
         result
     }
 
-    fn rotate(&mut self, point: &NPnt2d, angle: f64) {
+    fn rotate(&mut self, point: &NPoint2d, angle: f64) {
         self.loc.rotate(point, angle);
         self.vdir.rotate(angle);
     }
 
-    fn rotated(&self, point: &NPnt2d, angle: f64) -> Self {
+    fn rotated(&self, point: &NPoint2d, angle: f64) -> Self {
         let mut result = self.clone();
         result.rotate(point, angle);
         result
     }
 
-    fn scale(&mut self, point: &NPnt2d, factor: f64) {
+    fn scale(&mut self, point: &NPoint2d, factor: f64) {
         self.loc.scale(point, factor);
         if factor < 0.0 {
             self.vdir.reverse();
         }
     }
 
-    fn scaled(&self, point: &NPnt2d, factor: f64) -> Self {
+    fn scaled(&self, point: &NPoint2d, factor: f64) -> Self {
         let mut result = self.clone();
         result.scale(point, factor);
         result
@@ -188,11 +188,11 @@ impl Ax2d for NAx2d {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPnt2d, to: &NPnt2d) {
+    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d) {
         self.loc.translate_pnts(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPnt2d, to: &NPnt2d) -> Self {
+    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.translate_pnts(from, to);
         result
@@ -206,7 +206,7 @@ mod tests {
 
     fn ax2d(x: f64, y: f64, dx: f64, dy: f64) -> NAx2d {
         NAx2d::new(
-            NPnt2d::new(x, y),
+            NPoint2d::new(x, y),
             NDir2d::new(dx, dy).expect("Invalid direction"),
         )
     }
@@ -214,16 +214,16 @@ mod tests {
     #[test]
     fn test_x_axis() {
         let x_axis = NAx2d::x_axis();
-        assert_eq!(x_axis.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(x_axis.location(), &NPoint2d::new(0.0, 0.0));
         assert_eq!(x_axis.direction(), &NDir2d::new(1.0, 0.0).unwrap());
     }
 
     #[test]
     fn test_setters() {
         let mut ax = NAx2d::x_axis();
-        ax.set_location(NPnt2d::new(1.0, 2.0));
+        ax.set_location(NPoint2d::new(1.0, 2.0));
         ax.set_direction(NDir2d::new(0.0, 1.0).unwrap());
-        assert_eq!(ax.location(), &NPnt2d::new(1.0, 2.0));
+        assert_eq!(ax.location(), &NPoint2d::new(1.0, 2.0));
         assert_eq!(ax.direction(), &NDir2d::new(0.0, 1.0).unwrap());
     }
 
@@ -266,18 +266,18 @@ mod tests {
     #[test]
     fn test_mirror_pnt() {
         let mut ax = ax2d(1.0, 0.0, 1.0, 0.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         ax.mirror_pnt(&point);
-        assert_eq!(ax.location(), &NPnt2d::new(-1.0, 0.0));
+        assert_eq!(ax.location(), &NPoint2d::new(-1.0, 0.0));
         assert_eq!(ax.direction(), &NDir2d::new(-1.0, 0.0).unwrap());
     }
 
     #[test]
     fn test_mirrored_pnt() {
         let ax = ax2d(1.0, 0.0, 1.0, 0.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         let mirrored = ax.mirrored_pnt(&point);
-        assert_eq!(mirrored.location(), &NPnt2d::new(-1.0, 0.0));
+        assert_eq!(mirrored.location(), &NPoint2d::new(-1.0, 0.0));
         assert_eq!(mirrored.direction(), &NDir2d::new(-1.0, 0.0).unwrap());
     }
 
@@ -286,14 +286,14 @@ mod tests {
         let mut ax = ax2d(1.0, 0.0, 1.0, 0.0);
         let axis = ax2d(0.0, 0.0, 0.0, 1.0);
         ax.mirror_ax2d(&axis);
-        assert_eq!(ax.location(), &NPnt2d::new(1.0, 0.0));
+        assert_eq!(ax.location(), &NPoint2d::new(1.0, 0.0));
         assert_eq!(ax.direction(), &NDir2d::new(-1.0, 0.0).unwrap());
     }
 
     #[test]
     fn test_rotate() {
         let mut ax = ax2d(1.0, 0.0, 1.0, 0.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         ax.rotate(&point, PI / 2.0);
         assert!((ax.location().x() - 0.0).abs() < 1e-5);
         assert!((ax.location().y() - 1.0).abs() < 1e-5);
@@ -304,13 +304,13 @@ mod tests {
     #[test]
     fn test_scale() {
         let mut ax = ax2d(1.0, 0.0, 1.0, 0.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         ax.scale(&point, 2.0);
-        assert_eq!(ax.location(), &NPnt2d::new(2.0, 0.0));
+        assert_eq!(ax.location(), &NPoint2d::new(2.0, 0.0));
         assert_eq!(ax.direction(), &NDir2d::new(1.0, 0.0).unwrap());
 
         ax.scale(&point, -2.0);
-        assert_eq!(ax.location(), &NPnt2d::new(-4.0, 0.0));
+        assert_eq!(ax.location(), &NPoint2d::new(-4.0, 0.0));
         assert_eq!(ax.direction(), &NDir2d::new(-1.0, 0.0).unwrap());
     }
 
@@ -319,17 +319,17 @@ mod tests {
         let mut ax = ax2d(1.0, 2.0, 1.0, 0.0);
         let vec = NVec2d::new(1.0, 1.0);
         ax.translate_vec(&vec);
-        assert_eq!(ax.location(), &NPnt2d::new(2.0, 3.0));
+        assert_eq!(ax.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(ax.direction(), &NDir2d::new(1.0, 0.0).unwrap());
     }
 
     #[test]
     fn test_translate_pnts() {
         let mut ax = ax2d(1.0, 2.0, 1.0, 0.0);
-        let p1 = NPnt2d::new(0.0, 0.0);
-        let p2 = NPnt2d::new(1.0, 1.0);
+        let p1 = NPoint2d::new(0.0, 0.0);
+        let p2 = NPoint2d::new(1.0, 1.0);
         ax.translate_pnts(&p1, &p2);
-        assert_eq!(ax.location(), &NPnt2d::new(2.0, 3.0));
+        assert_eq!(ax.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(ax.direction(), &NDir2d::new(1.0, 0.0).unwrap());
     }
 }

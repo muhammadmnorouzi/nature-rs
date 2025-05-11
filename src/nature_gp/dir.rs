@@ -534,7 +534,7 @@ mod tests {
     #[test]
     fn test_mirror_ax1() {
         let mut d1 = dir(0.0, 1.0, 0.0);
-        let ax1 = NAx1::new(NPnt::new(0.0, 0.0, 0.0), dir(0.0, 1.0, 0.0));
+        let ax1 = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), dir(0.0, 1.0, 0.0));
         d1.mirror_ax1(&ax1);
         assert_eq!(d1.coords(), (0.0, -1.0, 0.0));
 
@@ -546,7 +546,7 @@ mod tests {
     fn test_mirror_ax2() {
         let mut d1 = dir(0.0, 1.0, 0.0);
         let ax2 = NAx2::new(
-            NPnt::new(0.0, 0.0, 0.0),
+            NPoint3d::new(0.0, 0.0, 0.0),
             dir(0.0, 0.0, 1.0),
             dir(1.0, 0.0, 0.0),
         )
@@ -561,7 +561,7 @@ mod tests {
     #[test]
     fn test_rotate() {
         let mut d1 = dir(1.0, 0.0, 0.0);
-        let axis = NAx1::new(NPnt::new(0.0, 0.0, 0.0), dir(0.0, 0.0, 1.0));
+        let axis = NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), dir(0.0, 0.0, 1.0));
         d1.rotate(&axis, PI / 2.0);
         assert!((d1.x() - 0.0).abs() < 1e-10);
         assert!((d1.y() - 1.0).abs() < 1e-10);
@@ -574,12 +574,12 @@ mod tests {
     #[test]
     fn test_transform() {
         let mut d1 = dir(1.0, 0.0, 0.0);
-        let trsf = NTrsf::new_scale(&NPnt::new(0.0, 0.0, 0.0), -2.0).unwrap();
+        let trsf = NTrsf::new_scale(&NPoint3d::new(0.0, 0.0, 0.0), -2.0).unwrap();
         d1.transform(&trsf);
         assert_eq!(d1.coords(), (-1.0, 0.0, 0.0));
 
         let trsf = NTrsf::new_rotation(
-            &NAx1::new(NPnt::new(0.0, 0.0, 0.0), dir(0.0, 0.0, 1.0)),
+            &NAx1::new(NPoint3d::new(0.0, 0.0, 0.0), dir(0.0, 0.0, 1.0)),
             PI / 2.0,
         )
         .unwrap();

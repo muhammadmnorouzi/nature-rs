@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    gp::{NAx1, NAx2, NPnt, NTrsf, NVec},
+    gp::{NAx1, NAx2, NPoint3d, NTrsf, NVec},
     nature_errors::NErrors,
 };
 
@@ -13,7 +13,7 @@ pub trait Elips {
     where
         Self: Sized;
     fn set_axis(&mut self, a1: &NAx1) -> Result<(), NErrors>;
-    fn set_location(&mut self, p: &NPnt);
+    fn set_location(&mut self, p: &NPoint3d);
     fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NErrors>;
     fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NErrors>;
     fn set_position(&mut self, a2: &NAx2);
@@ -23,31 +23,31 @@ pub trait Elips {
     fn directrix2(&self) -> Result<NAx1, NErrors>;
     fn eccentricity(&self) -> f64;
     fn focal(&self) -> f64;
-    fn focus1(&self) -> NPnt;
-    fn focus2(&self) -> NPnt;
-    fn location(&self) -> &NPnt;
+    fn focus1(&self) -> NPoint3d;
+    fn focus2(&self) -> NPoint3d;
+    fn location(&self) -> &NPoint3d;
     fn major_radius(&self) -> f64;
     fn minor_radius(&self) -> f64;
     fn parameter(&self) -> f64;
     fn position(&self) -> &NAx2;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: &NPnt);
-    fn mirrored_pnt(&self, p: &NPnt) -> Self;
+    fn mirror_pnt(&mut self, p: &NPoint3d);
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self;
     fn mirror_ax1(&mut self, a1: &NAx1);
     fn mirrored_ax1(&self, a1: &NAx1) -> Self;
     fn mirror_ax2(&mut self, a2: &NAx2);
     fn mirrored_ax2(&self, a2: &NAx2) -> Self;
     fn rotate(&mut self, a1: &NAx1, angle: f64);
     fn rotated(&self, a1: &NAx1, angle: f64) -> Self;
-    fn scale(&mut self, p: &NPnt, s: f64);
-    fn scaled(&self, p: &NPnt, s: f64) -> Self;
+    fn scale(&mut self, p: &NPoint3d, s: f64);
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self;
     fn transform(&mut self, t: &NTrsf);
     fn transformed(&self, t: &NTrsf) -> Self;
     fn translate_vec(&mut self, v: &NVec);
     fn translated_vec(&self, v: &NVec) -> Self;
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt);
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self;
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self;
 }
 
 // Struct representing an ellipse in 3D space
@@ -75,7 +75,7 @@ impl Elips for NElips {
         Ok(())
     }
 
-    fn set_location(&mut self, p: &NPnt) {
+    fn set_location(&mut self, p: &NPoint3d) {
         self.pos.set_location(p);
     }
 
@@ -119,7 +119,7 @@ impl Elips for NElips {
             .multiplied(self.major_radius / e)
             .added(&self.pos.location().xyz());
         Ok(NAx1::new(
-            &NPnt::new_from_xyz(&orig),
+            &NPoint3d::new_from_xyz(&orig),
             &self.pos.y_direction(),
         ))
     }
@@ -136,7 +136,7 @@ impl Elips for NElips {
             .multiplied(-self.major_radius / e)
             .added(&self.pos.location().xyz());
         Ok(NAx1::new(
-            &NPnt::new_from_xyz(&orig),
+            &NPoint3d::new_from_xyz(&orig),
             &self.pos.y_direction(),
         ))
     }
@@ -154,23 +154,23 @@ impl Elips for NElips {
         2.0 * (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt()
     }
 
-    fn focus1(&self) -> NPnt {
+    fn focus1(&self) -> NPoint3d {
         let c =
             (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt();
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        NPnt::new(p.x() + c * d.x(), p.y() + c * d.y(), p.z() + c * d.z())
+        NPoint3d::new(p.x() + c * d.x(), p.y() + c * d.y(), p.z() + c * d.z())
     }
 
-    fn focus2(&self) -> NPnt {
+    fn focus2(&self) -> NPoint3d {
         let c =
             (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt();
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        NPnt::new(p.x() - c * d.x(), p.y() - c * d.y(), p.z() - c * d.z())
+        NPoint3d::new(p.x() - c * d.x(), p.y() - c * d.y(), p.z() - c * d.z())
     }
 
-    fn location(&self) -> &NPnt {
+    fn location(&self) -> &NPoint3d {
         self.pos.location()
     }
 
@@ -202,11 +202,11 @@ impl Elips for NElips {
         NAx1::new(self.pos.location(), &self.pos.y_direction())
     }
 
-    fn mirror_pnt(&mut self, p: &NPnt) {
+    fn mirror_pnt(&mut self, p: &NPoint3d) {
         self.pos.mirror_pnt(p);
     }
 
-    fn mirrored_pnt(&self, p: &NPnt) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
         let mut result = self.clone();
         result.mirror_pnt(p);
         result
@@ -242,13 +242,13 @@ impl Elips for NElips {
         result
     }
 
-    fn scale(&mut self, p: &NPnt, s: f64) {
+    fn scale(&mut self, p: &NPoint3d, s: f64) {
         self.major_radius *= s.abs();
         self.minor_radius *= s.abs();
         self.pos.scale(p, s);
     }
 
-    fn scaled(&self, p: &NPnt, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self {
         let mut result = self.clone();
         result.scale(p, s);
         result
@@ -276,11 +276,11 @@ impl Elips for NElips {
         result
     }
 
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.pos.translate_pnts(p1, p2);
     }
 
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self {
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut result = self.clone();
         result.translate_pnts(p1, p2);
         result
@@ -299,7 +299,7 @@ mod tests {
     #[test]
     fn test_new() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -322,7 +322,7 @@ mod tests {
     #[test]
     fn test_setters() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -348,7 +348,7 @@ mod tests {
         ));
 
         let new_pos = NAx2::new(
-            &NPnt::new(1.0, 1.0, 1.0),
+            &NPoint3d::new(1.0, 1.0, 1.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -356,7 +356,7 @@ mod tests {
         elips.set_position(&new_pos);
         assert_eq!(elips.position(), &new_pos);
 
-        let p = NPnt::new(2.0, 2.0, 2.0);
+        let p = NPoint3d::new(2.0, 2.0, 2.0);
         elips.set_location(&p);
         assert_eq!(elips.location(), &p);
     }
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn test_area() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -376,7 +376,7 @@ mod tests {
     #[test]
     fn test_eccentricity() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -392,7 +392,7 @@ mod tests {
     #[test]
     fn test_focal() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -405,7 +405,7 @@ mod tests {
     #[test]
     fn test_focus() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -425,7 +425,7 @@ mod tests {
     #[test]
     fn test_directrix() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -457,7 +457,7 @@ mod tests {
     #[test]
     fn test_parameter() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -472,7 +472,7 @@ mod tests {
     #[test]
     fn test_axes() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -480,8 +480,8 @@ mod tests {
         let elips = elips(&pos, 5.0, 3.0);
         let x_axis = elips.x_axis();
         let y_axis = elips.y_axis();
-        assert_eq!(x_axis.location(), &NPnt::new(0.0, 0.0, 0.0));
-        assert_eq!(y_axis.location(), &NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(x_axis.location(), &NPoint3d::new(0.0, 0.0, 0.0));
+        assert_eq!(y_axis.location(), &NPoint3d::new(0.0, 0.0, 0.0));
         assert_eq!(x_axis.direction().coords(), (1.0, 0.0, 0.0));
         assert_eq!(y_axis.direction().coords(), (0.0, 1.0, 0.0));
     }
@@ -489,30 +489,30 @@ mod tests {
     #[test]
     fn test_mirror() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
         .unwrap();
         let mut elips = elips(&pos, 5.0, 3.0);
-        let p = NPnt::new(1.0, 1.0, 1.0);
+        let p = NPoint3d::new(1.0, 1.0, 1.0);
         elips.mirror_pnt(&p);
         let mirrored = elips.mirrored_pnt(&p);
-        assert_eq!(elips.location(), &NPnt::new(2.0, 2.0, 2.0));
-        assert_eq!(mirrored.location(), &NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(elips.location(), &NPoint3d::new(2.0, 2.0, 2.0));
+        assert_eq!(mirrored.location(), &NPoint3d::new(0.0, 0.0, 0.0));
     }
 
     #[test]
     fn test_rotate() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
         .unwrap();
         let mut elips = elips(&pos, 5.0, 3.0);
         let axis = NAx1::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
         );
         elips.rotate(&axis, PI / 2.0);
@@ -528,42 +528,42 @@ mod tests {
     #[test]
     fn test_scale() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
         .unwrap();
         let mut elips = elips(&pos, 5.0, 3.0);
-        let p = NPnt::new(1.0, 1.0, 1.0);
+        let p = NPoint3d::new(1.0, 1.0, 1.0);
         elips.scale(&p, -2.0);
         assert_eq!(elips.major_radius(), 10.0);
         assert_eq!(elips.minor_radius(), 6.0);
-        assert_eq!(elips.location(), &NPnt::new(3.0, 3.0, 3.0));
+        assert_eq!(elips.location(), &NPoint3d::new(3.0, 3.0, 3.0));
 
         let scaled = elips.scaled(&p, 0.5);
         assert_eq!(scaled.major_radius(), 5.0);
         assert_eq!(scaled.minor_radius(), 3.0);
-        assert_eq!(scaled.location(), &NPnt::new(2.0, 2.0, 2.0));
+        assert_eq!(scaled.location(), &NPoint3d::new(2.0, 2.0, 2.0));
     }
 
     #[test]
     fn test_transform() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
         .unwrap();
         let mut elips = elips(&pos, 5.0, 3.0);
-        let trsf = NTrsf::new_scale(&NPnt::new(0.0, 0.0, 0.0), -2.0).unwrap();
+        let trsf = NTrsf::new_scale(&NPoint3d::new(0.0, 0.0, 0.0), -2.0).unwrap();
         elips.transform(&trsf);
         assert_eq!(elips.major_radius(), 10.0);
         assert_eq!(elips.minor_radius(), 6.0);
-        assert_eq!(elips.location(), &NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(elips.location(), &NPoint3d::new(0.0, 0.0, 0.0));
 
         let trsf = NTrsf::new_rotation(
             &NAx1::new(
-                &NPnt::new(0.0, 0.0, 0.0),
+                &NPoint3d::new(0.0, 0.0, 0.0),
                 &NDir::new(0.0, 0.0, 1.0).unwrap(),
             ),
             PI / 2.0,
@@ -579,7 +579,7 @@ mod tests {
     #[test]
     fn test_translate() {
         let pos = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
@@ -587,11 +587,11 @@ mod tests {
         let mut elips = elips(&pos, 5.0, 3.0);
         let v = NVec::new(1.0, 2.0, 3.0);
         elips.translate_vec(&v);
-        assert_eq!(elips.location(), &NPnt::new(1.0, 2.0, 3.0));
+        assert_eq!(elips.location(), &NPoint3d::new(1.0, 2.0, 3.0));
 
-        let p1 = NPnt::new(1.0, 1.0, 1.0);
-        let p2 = NPnt::new(2.0, 3.0, 4.0);
+        let p1 = NPoint3d::new(1.0, 1.0, 1.0);
+        let p2 = NPoint3d::new(2.0, 3.0, 4.0);
         let translated = elips.translated_pnts(&p1, &p2);
-        assert_eq!(translated.location(), &NPnt::new(2.0, 3.0, 4.0));
+        assert_eq!(translated.location(), &NPoint3d::new(2.0, 3.0, 4.0));
     }
 }

@@ -518,14 +518,14 @@ mod tests {
 
     fn ax1() -> NAx1 {
         NAx1::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
         )
     }
 
     fn ax2() -> NAx2 {
         NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0).unwrap(),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )

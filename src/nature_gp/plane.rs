@@ -3,7 +3,7 @@ use std::io::Write;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    gp::{NAx1, NAx2, NAx3, NDir, NGP, NLin, NPnt, NTrsf, NVec},
+    gp::{NAx1, NAx2, NAx3, NDir, NGP, NLin, NPoint3d, NTrsf, NVec},
     nature_errors::NErrors,
 };
 
@@ -11,30 +11,30 @@ use crate::{
 pub trait Pln {
     fn new() -> Self;
     fn new_with_ax3(a3: &NAx3) -> Self;
-    fn new_with_point_dir(p: &NPnt, v: &NDir) -> Result<Self, NErrors>;
+    fn new_with_point_dir(p: &NPoint3d, v: &NDir) -> Result<Self, NErrors>;
     fn new_with_coefficients(a: f64, b: f64, c: f64, d: f64) -> Result<Self, NErrors>;
     fn coefficients(&self) -> (f64, f64, f64, f64);
     fn set_axis(&mut self, a1: &NAx1) -> Result<(), NErrors>;
-    fn set_location(&mut self, loc: &NPnt);
+    fn set_location(&mut self, loc: &NPoint3d);
     fn set_position(&mut self, a3: &NAx3);
     fn u_reverse(&mut self);
     fn v_reverse(&mut self);
     fn direct(&self) -> bool;
     fn axis(&self) -> NAx1;
-    fn location(&self) -> NPnt;
+    fn location(&self) -> NPoint3d;
     fn position(&self) -> NAx3;
-    fn distance_pnt(&self, p: &NPnt) -> f64;
+    fn distance_pnt(&self, p: &NPoint3d) -> f64;
     fn distance_lin(&self, l: &NLin) -> f64;
     fn distance_pln(&self, other: &Self) -> f64;
-    fn square_distance_pnt(&self, p: &NPnt) -> f64;
+    fn square_distance_pnt(&self, p: &NPoint3d) -> f64;
     fn square_distance_lin(&self, l: &NLin) -> f64;
     fn square_distance_pln(&self, other: &Self) -> f64;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn contains_pnt(&self, p: &NPnt, linear_tolerance: f64) -> bool;
+    fn contains_pnt(&self, p: &NPoint3d, linear_tolerance: f64) -> bool;
     fn contains_lin(&self, l: &NLin, linear_tolerance: f64, angular_tolerance: f64) -> bool;
-    fn mirror_pnt(&mut self, p: &NPnt);
-    fn mirrored_pnt(&self, p: &NPnt) -> Self
+    fn mirror_pnt(&mut self, p: &NPoint3d);
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -49,8 +49,8 @@ pub trait Pln {
     fn rotated(&self, a1: &NAx1, ang: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, p: &NPnt, s: f64);
-    fn scaled(&self, p: &NPnt, s: f64) -> Self
+    fn scale(&mut self, p: &NPoint3d, s: f64);
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, t: &NTrsf);
@@ -61,8 +61,8 @@ pub trait Pln {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt);
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -79,7 +79,7 @@ impl Pln for NPln {
     fn new() -> Self {
         NPln {
             pos: NAx3::new(
-                &NPnt::new(0.0, 0.0, 0.0),
+                &NPoint3d::new(0.0, 0.0, 0.0),
                 &NDir::new(0.0, 0.0, 1.0),
                 &NDir::new(1.0, 0.0, 0.0),
             )
@@ -93,7 +93,7 @@ impl Pln for NPln {
     }
 
     /// Creates a plane with a location point and normal direction.
-    fn new_with_point_dir(p: &NPnt, v: &NDir) -> Result<Self, NErrors> {
+    fn new_with_point_dir(p: &NPoint3d, v: &NDir) -> Result<Self, NErrors> {
         let a = v.x();
         let b = v.y();
         let c = v.z();
@@ -135,13 +135,13 @@ impl Pln for NPln {
         let pos = if b_abs <= a_abs && b_abs <= c_abs {
             if a_abs > c_abs {
                 NAx3::new(
-                    &NPnt::new(-d / a, 0.0, 0.0),
+                    &NPoint3d::new(-d / a, 0.0, 0.0),
                     &NDir::new(a, b, c),
                     &NDir::new(-c, 0.0, a),
                 )
             } else {
                 NAx3::new(
-                    &NPnt::new(0.0, 0.0, -d / c),
+                    &NPoint3d::new(0.0, 0.0, -d / c),
                     &NDir::new(a, b, c),
                     &NDir::new(c, 0.0, -a),
                 )
@@ -149,13 +149,13 @@ impl Pln for NPln {
         } else if a_abs <= b_abs && a_abs <= c_abs {
             if b_abs > c_abs {
                 NAx3::new(
-                    &NPnt::new(0.0, -d / b, 0.0),
+                    &NPoint3d::new(0.0, -d / b, 0.0),
                     &NDir::new(a, b, c),
                     &NDir::new(0.0, -c, b),
                 )
             } else {
                 NAx3::new(
-                    &NPnt::new(0.0, 0.0, -d / c),
+                    &NPoint3d::new(0.0, 0.0, -d / c),
                     &NDir::new(a, b, c),
                     &NDir::new(0.0, c, -b),
                 )
@@ -163,13 +163,13 @@ impl Pln for NPln {
         } else {
             if a_abs > b_abs {
                 NAx3::new(
-                    &NPnt::new(-d / a, 0.0, 0.0),
+                    &NPoint3d::new(-d / a, 0.0, 0.0),
                     &NDir::new(a, b, c),
                     &NDir::new(-b, a, 0.0),
                 )
             } else {
                 NAx3::new(
-                    &NPnt::new(0.0, -d / b, 0.0),
+                    &NPoint3d::new(0.0, -d / b, 0.0),
                     &NDir::new(a, b, c),
                     &NDir::new(b, -a, 0.0),
                 )
@@ -198,7 +198,7 @@ impl Pln for NPln {
     }
 
     /// Changes the origin of the plane.
-    fn set_location(&mut self, loc: &NPnt) {
+    fn set_location(&mut self, loc: &NPoint3d) {
         self.pos.set_location(loc);
     }
 
@@ -228,7 +228,7 @@ impl Pln for NPln {
     }
 
     /// Returns the plane's location (origin).
-    fn location(&self) -> NPnt {
+    fn location(&self) -> NPoint3d {
         self.pos.location()
     }
 
@@ -238,7 +238,7 @@ impl Pln for NPln {
     }
 
     /// Computes the distance between the plane and a point.
-    fn distance_pnt(&self, p: &NPnt) -> f64 {
+    fn distance_pnt(&self, p: &NPoint3d) -> f64 {
         let loc = self.pos.location();
         let dir = self.pos.direction();
         let d =
@@ -285,7 +285,7 @@ impl Pln for NPln {
     }
 
     /// Computes the square distance between the plane and a point.
-    fn square_distance_pnt(&self, p: &NPnt) -> f64 {
+    fn square_distance_pnt(&self, p: &NPoint3d) -> f64 {
         let d = self.distance_pnt(p);
         d * d
     }
@@ -313,7 +313,7 @@ impl Pln for NPln {
     }
 
     /// Returns true if the plane contains the point within the linear tolerance.
-    fn contains_pnt(&self, p: &NPnt, linear_tolerance: f64) -> bool {
+    fn contains_pnt(&self, p: &NPoint3d, linear_tolerance: f64) -> bool {
         self.distance_pnt(p) <= linear_tolerance
     }
 
@@ -327,12 +327,12 @@ impl Pln for NPln {
     }
 
     /// Mirrors the plane with respect to a point.
-    fn mirror_pnt(&mut self, p: &NPnt) {
+    fn mirror_pnt(&mut self, p: &NPoint3d) {
         self.pos.mirror_pnt(p);
     }
 
     /// Returns the plane mirrored with respect to a point.
-    fn mirrored_pnt(&self, p: &NPnt) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
         let mut pl = self.clone();
         pl.mirror_pnt(p);
         pl
@@ -375,12 +375,12 @@ impl Pln for NPln {
     }
 
     /// Scales the plane with respect to a point.
-    fn scale(&mut self, p: &NPnt, s: f64) {
+    fn scale(&mut self, p: &NPoint3d, s: f64) {
         self.pos.scale(p, s);
     }
 
     /// Returns the plane scaled with respect to a point.
-    fn scaled(&self, p: &NPnt, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self {
         let mut pl = self.clone();
         pl.scale(p, s);
         pl
@@ -411,12 +411,12 @@ impl Pln for NPln {
     }
 
     /// Translates the plane from one point to another.
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.pos.translate_pnts(p1, p2);
     }
 
     /// Returns the plane translated from one point to another.
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self {
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut pl = self.clone();
         pl.translate_pnts(p1, p2);
         pl
@@ -439,7 +439,7 @@ mod tests {
 
     fn create_test_plane() -> NPln {
         let a3 = NAx3::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0),
             &NDir::new(1.0, 0.0, 0.0),
         )
@@ -450,13 +450,13 @@ mod tests {
     #[test]
     fn test_new() {
         let pln = NPln::new();
-        assert_eq!(pln.location(), NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(pln.location(), NPoint3d::new(0.0, 0.0, 0.0));
         assert_eq!(pln.pos.direction(), NDir::new(0.0, 0.0, 1.0));
     }
 
     #[test]
     fn test_new_with_point_dir() {
-        let p = NPnt::new(1.0, 2.0, 3.0);
+        let p = NPoint3d::new(1.0, 2.0, 3.0);
         let v = NDir::new(0.0, 0.0, 1.0);
         let pln = NPln::new_with_point_dir(&p, &v).unwrap();
         assert_eq!(pln.location(), p);
@@ -490,7 +490,7 @@ mod tests {
     #[test]
     fn test_distance_pnt() {
         let pln = create_test_plane();
-        let p = NPnt::new(0.0, 0.0, 5.0);
+        let p = NPoint3d::new(0.0, 0.0, 5.0);
         assert!((pln.distance_pnt(&p) - 5.0).abs() < 1e-9);
         assert!((pln.square_distance_pnt(&p) - 25.0).abs() < 1e-9);
     }
@@ -499,12 +499,12 @@ mod tests {
     fn test_distance_lin() {
         let pln = create_test_plane();
         let l = NLin::new_with_ax1(&NAx1::new(
-            &NPnt::new(0.0, 0.0, 5.0),
+            &NPoint3d::new(0.0, 0.0, 5.0),
             &NDir::new(1.0, 0.0, 0.0),
         ));
         assert!((pln.distance_lin(&l) - 5.0).abs() < 1e-9);
         let l = NLin::new_with_ax1(&NAx1::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0),
         ));
         assert!((pln.distance_lin(&l) - 0.0).abs() < 1e-9);
@@ -513,10 +513,10 @@ mod tests {
     #[test]
     fn test_contains() {
         let pln = create_test_plane();
-        let p = NPnt::new(1.0, 1.0, 0.0);
+        let p = NPoint3d::new(1.0, 1.0, 0.0);
         assert!(pln.contains_pnt(&p, 1e-6));
         let l = NLin::new_with_ax1(&NAx1::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(1.0, 0.0, 0.0),
         ));
         assert!(pln.contains_lin(&l, 1e-6, 1e-6));

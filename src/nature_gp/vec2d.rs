@@ -25,10 +25,10 @@ pub trait Vec2d {
      fn new_from_coords(x: f64, y: f64) -> Self;
 
     /// Creates a vector from two points (P2 - P1).
-     fn new_from_points(p1: &NPnt2d, p2: &NPnt2d) -> Self;
+     fn new_from_points(p1: &NPoint2d, p2: &NPoint2d) -> Self;
 
     /// Sets the coordinate at the given index (1=X, 2=Y).
-     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError>;
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors>;
 
     /// Sets all coordinates.
      fn set_coords(&mut self, x: f64, y: f64);
@@ -43,7 +43,7 @@ pub trait Vec2d {
      fn set_xy(&mut self, xy: &NXY);
 
     /// Gets the coordinate at the given index (1=X, 2=Y).
-     fn coord(&self, index: i32) -> Result<f64, NatureError>;
+     fn coord(&self, index: i32) -> Result<f64, NErrors>;
 
     /// Gets all coordinates.
      fn coords(&self) -> (f64, f64);
@@ -61,16 +61,16 @@ pub trait Vec2d {
      fn is_equal(&self, other: &NVec2d, linear_tolerance: f64, angular_tolerance: f64) -> bool;
 
     /// Checks if the vector is normal to another within angular tolerance.
-     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors>;
 
     /// Checks if the vector is opposite to another within angular tolerance.
-     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors>;
 
     /// Checks if the vector is parallel to another within angular tolerance.
-     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError>;
+     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors>;
 
     /// Computes the angle between two vectors (-PI to PI radians).
-     fn angle(&self, other: &NVec2d) -> Result<f64, NatureError>;
+     fn angle(&self, other: &NVec2d) -> Result<f64, NErrors>;
 
     /// Computes the magnitude of the vector.
      fn magnitude(&self) -> f64;
@@ -97,10 +97,10 @@ pub trait Vec2d {
      fn multiplied(&self, scalar: f64) -> NVec2d;
 
     /// Divides the vector by a scalar.
-     fn divide(&mut self, scalar: f64) -> Result<(), NatureError>;
+     fn divide(&mut self, scalar: f64) -> Result<(), NErrors>;
 
     /// Returns the vector divided by a scalar.
-     fn divided(&self, scalar: f64) -> Result<NVec2d, NatureError>;
+     fn divided(&self, scalar: f64) -> Result<NVec2d, NErrors>;
 
     /// Computes the cross product with another vector (returns a scalar).
      fn crossed(&self, other: &NVec2d) -> f64;
@@ -118,10 +118,10 @@ pub trait Vec2d {
      fn get_normal(&self) -> NVec2d;
 
     /// Normalizes the vector.
-     fn normalize(&mut self) -> Result<(), NatureError>;
+     fn normalize(&mut self) -> Result<(), NErrors>;
 
     /// Returns a normalized copy of the vector.
-     fn normalized(&self) -> Result<NVec2d, NatureError>;
+     fn normalized(&self) -> Result<NVec2d, NErrors>;
 
     /// Reverses the direction of the vector.
      fn reverse(&mut self);
@@ -142,10 +142,10 @@ pub trait Vec2d {
      fn set_linear_form_sum(&mut self, v1: &NVec2d, v2: &NVec2d);
 
     /// Mirrors the vector with respect to another vector.
-     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NatureError>;
+     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NErrors>;
 
     /// Returns a mirrored copy with respect to another vector.
-     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NatureError>;
+     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NErrors>;
 
     /// Mirrors the vector with respect to an axis.
      fn mirror_ax2d(&mut self, a1: &NAx2d);
@@ -154,10 +154,10 @@ pub trait Vec2d {
      fn mirrored_ax2d(&self, a1: &NAx2d) -> NVec2d;
 
     /// Rotates the vector by an angle.
-     fn rotate(&mut self, ang: f64) -> Result<(), NatureError>;
+     fn rotate(&mut self, ang: f64) -> Result<(), NErrors>;
 
     /// Returns a rotated copy of the vector.
-     fn rotated(&self, ang: f64) -> Result<NVec2d, NatureError>;
+     fn rotated(&self, ang: f64) -> Result<NVec2d, NErrors>;
 
     /// Scales the vector by a factor.
      fn scale(&mut self, s: f64);
@@ -201,18 +201,18 @@ impl Vec2d for NVec2d {
     }
 
     /// Creates a vector from two points (P2 - P1).
-     fn new_from_points(p1: &NPnt2d, p2: &NPnt2d) -> Self {
+     fn new_from_points(p1: &NPoint2d, p2: &NPoint2d) -> Self {
         NVec2d {
             coord: p2.xy().subtracted(&p1.xy()),
         }
     }
 
     /// Sets the coordinate at the given index (1=X, 2=Y).
-     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError> {
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors> {
         match index {
             1 => self.coord.set_x(value),
             2 => self.coord.set_y(value),
-            _ => return Err(NatureError::OutOfRange),
+            _ => return Err(NErrors::OutOfRange),
         }
         Ok(())
     }
@@ -238,11 +238,11 @@ impl Vec2d for NVec2d {
     }
 
     /// Gets the coordinate at the given index (1=X, 2=Y).
-     fn coord(&self, index: i32) -> Result<f64, NatureError> {
+     fn coord(&self, index: i32) -> Result<f64, NErrors> {
         match index {
             1 => Ok(self.coord.x()),
             2 => Ok(self.coord.y()),
-            _ => Err(NatureError::OutOfRange),
+            _ => Err(NErrors::OutOfRange),
         }
     }
 
@@ -284,13 +284,13 @@ impl Vec2d for NVec2d {
     }
 
     /// Checks if the vector is normal to another within angular tolerance.
-     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_normal(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = (std::f64::consts::PI / 2.0 - self.angle(other)?.abs()).abs();
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is opposite to another within angular tolerance.
-     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_opposite(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors> {
         let mut angle = self.angle(other)?.abs();
         if angle > std::f64::consts::PI {
             angle = 2.0 * std::f64::consts::PI - angle;
@@ -299,7 +299,7 @@ impl Vec2d for NVec2d {
     }
 
     /// Checks if the vector is parallel to another within angular tolerance.
-     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NatureError> {
+     fn is_parallel(&self, other: &NVec2d, angular_tolerance: f64) -> Result<bool, NErrors> {
         let mut angle = self.angle(other)?.abs();
         if angle > std::f64::consts::PI {
             angle = 2.0 * std::f64::consts::PI - angle;
@@ -308,11 +308,11 @@ impl Vec2d for NVec2d {
     }
 
     /// Computes the angle between two vectors (-PI to PI radians).
-     fn angle(&self, other: &NVec2d) -> Result<f64, NatureError> {
+     fn angle(&self, other: &NVec2d) -> Result<f64, NErrors> {
         let norm = self.magnitude();
         let other_norm = other.magnitude();
         if norm <= gp::resolution() || other_norm <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let d = norm * other_norm;
         let cosinus = self.coord.dot(&other.coord) / d;
@@ -375,18 +375,18 @@ impl Vec2d for NVec2d {
     }
 
     /// Divides the vector by a scalar.
-     fn divide(&mut self, scalar: f64) -> Result<(), NatureError> {
+     fn divide(&mut self, scalar: f64) -> Result<(), NErrors> {
         if scalar.abs() <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.coord.divide(scalar);
         Ok(())
     }
 
     /// Returns the vector divided by a scalar.
-     fn divided(&self, scalar: f64) -> Result<NVec2d, NatureError> {
+     fn divided(&self, scalar: f64) -> Result<NVec2d, NErrors> {
         if scalar.abs() <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         Ok(NVec2d {
             coord: self.coord.divided(scalar),
@@ -421,20 +421,20 @@ impl Vec2d for NVec2d {
     }
 
     /// Normalizes the vector.
-     fn normalize(&mut self) -> Result<(), NatureError> {
+     fn normalize(&mut self) -> Result<(), NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         self.coord.divide(mag);
         Ok(())
     }
 
     /// Returns a normalized copy of the vector.
-     fn normalized(&self) -> Result<NVec2d, NatureError> {
+     fn normalized(&self) -> Result<NVec2d, NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         Ok(NVec2d {
             coord: self.coord.divided(mag),
@@ -474,10 +474,10 @@ impl Vec2d for NVec2d {
     }
 
     /// Mirrors the vector with respect to another vector.
-     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NatureError> {
+     fn mirror_vec(&mut self, v: &NVec2d) -> Result<(), NErrors> {
         let d = v.magnitude();
         if d <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let xy = &v.coord;
         let a = xy.x() / d;
@@ -493,7 +493,7 @@ impl Vec2d for NVec2d {
     }
 
     /// Returns a mirrored copy with respect to another vector.
-     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NatureError> {
+     fn mirrored_vec(&self, v: &NVec2d) -> Result<NVec2d, NErrors> {
         let mut result = self.clone();
         result.mirror_vec(v)?;
         Ok(result)
@@ -521,15 +521,15 @@ impl Vec2d for NVec2d {
     }
 
     /// Rotates the vector by an angle.
-     fn rotate(&mut self, ang: f64) -> Result<(), NatureError> {
+     fn rotate(&mut self, ang: f64) -> Result<(), NErrors> {
         let mut t = NTrsf2d::new();
-        t.set_rotation(&NPnt2d::new(0.0, 0.0), ang)?;
+        t.set_rotation(&NPoint2d::new(0.0, 0.0), ang)?;
         self.coord.multiply(&t.vectorial_part());
         Ok(())
     }
 
     /// Returns a rotated copy of the vector.
-     fn rotated(&self, ang: f64) -> Result<NVec2d, NatureError> {
+     fn rotated(&self, ang: f64) -> Result<NVec2d, NErrors> {
         let mut result = self.clone();
         result.rotate(ang)?;
         Ok(result)
@@ -663,7 +663,7 @@ mod tests {
     fn test_transform() {
         let mut v = NVec2d::new_from_coords(1.0, 0.0);
         let mut t = NTrsf2d::new();
-        t.set_scale(&NPnt2d::new(0.0, 0.0), 2.0).unwrap();
+        t.set_scale(&NPoint2d::new(0.0, 0.0), 2.0).unwrap();
         v.transform(&t);
         assert_eq!(v.coords(), (2.0, 0.0));
     }

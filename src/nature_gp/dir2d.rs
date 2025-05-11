@@ -227,7 +227,7 @@ impl Dir2d for NDir2d {
     }
 
     fn rotate(&mut self, angle: f64) {
-        let trsf = NTrsf2d::new_rotation(&NPnt2d::new(0.0, 0.0), angle).expect("Invalid rotation");
+        let trsf = NTrsf2d::new_rotation(&NPoint2d::new(0.0, 0.0), angle).expect("Invalid rotation");
         self.transform(&trsf);
     }
 
@@ -409,7 +409,7 @@ mod tests {
     #[test]
     fn test_mirror_ax2d() {
         let mut d1 = dir2d(0.0, 1.0);
-        let ax2d = NAx2d::new(NPnt2d::new(0.0, 0.0), dir2d(0.0, 1.0));
+        let ax2d = NAx2d::new(NPoint2d::new(0.0, 0.0), dir2d(0.0, 1.0));
         d1.mirror_ax2d(&ax2d);
         assert_eq!(d1.coords(), (0.0, -1.0));
 
@@ -431,11 +431,11 @@ mod tests {
     #[test]
     fn test_transform() {
         let mut d1 = dir2d(1.0, 0.0);
-        let trsf = NTrsf2d::new_scale(&NPnt2d::new(0.0, 0.0), -2.0).unwrap();
+        let trsf = NTrsf2d::new_scale(&NPoint2d::new(0.0, 0.0), -2.0).unwrap();
         d1.transform(&trsf);
         assert_eq!(d1.coords(), (-1.0, 0.0));
 
-        let trsf = NTrsf2d::new_rotation(&NPnt2d::new(0.0, 0.0), PI / 2.0).unwrap();
+        let trsf = NTrsf2d::new_rotation(&NPoint2d::new(0.0, 0.0), PI / 2.0).unwrap();
         let transformed = d1.transformed(&trsf);
         assert!((transformed.x() - 0.0).abs() < 1e-10);
         assert!((transformed.y() - 1.0).abs() < 1e-10);

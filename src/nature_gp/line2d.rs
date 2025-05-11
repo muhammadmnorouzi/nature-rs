@@ -3,7 +3,7 @@ use std::io::Write;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    gp::{NAx2d, NDir2d, NGP, NPnt2d, NTrsf2d, NVec2d, NXY},
+    gp::{NAx2d, NDir2d, NGP, NPoint2d, NTrsf2d, NVec2d, NXY},
     nature_errors::NErrors,
 };
 
@@ -11,7 +11,7 @@ use crate::{
 pub trait Lin2d {
     fn new() -> Self;
     fn new_with_axis(a: &NAx2d) -> Self;
-    fn new_with_point_dir(p: &NPnt2d, v: &NDir2d) -> Self;
+    fn new_with_point_dir(p: &NPoint2d, v: &NDir2d) -> Self;
     fn new_with_coefficients(a: f64, b: f64, c: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
@@ -20,35 +20,35 @@ pub trait Lin2d {
     where
         Self: Sized;
     fn set_direction(&mut self, v: &NDir2d);
-    fn set_location(&mut self, p: &NPnt2d);
+    fn set_location(&mut self, p: &NPoint2d);
     fn set_position(&mut self, a: &NAx2d);
     fn coefficients(&self) -> (f64, f64, f64);
     fn direction(&self) -> &NDir2d;
-    fn location(&self) -> &NPnt2d;
+    fn location(&self) -> &NPoint2d;
     fn position(&self) -> &NAx2d;
     fn angle(&self, other: &Self) -> f64;
-    fn contains(&self, p: &NPnt2d, linear_tolerance: f64) -> bool;
-    fn distance_to_point(&self, p: &NPnt2d) -> f64;
+    fn contains(&self, p: &NPoint2d, linear_tolerance: f64) -> bool;
+    fn distance_to_point(&self, p: &NPoint2d) -> f64;
     fn distance_to_line(&self, other: &Self) -> f64;
-    fn square_distance_to_point(&self, p: &NPnt2d) -> f64;
+    fn square_distance_to_point(&self, p: &NPoint2d) -> f64;
     fn square_distance_to_line(&self, other: &Self) -> f64;
-    fn normal(&self, p: &NPnt2d) -> Self
+    fn normal(&self, p: &NPoint2d) -> Self
     where
         Self: Sized;
-    fn mirror_pnt(&mut self, p: &NPnt2d);
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self
+    fn mirror_pnt(&mut self, p: &NPoint2d);
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self
     where
         Self: Sized;
     fn mirror_ax2d(&mut self, a: &NAx2d);
     fn mirrored_ax2d(&self, a: &NAx2d) -> Self
     where
         Self: Sized;
-    fn rotate(&mut self, p: &NPnt2d, ang: f64);
-    fn rotated(&self, p: &NPnt2d, ang: f64) -> Self
+    fn rotate(&mut self, p: &NPoint2d, ang: f64);
+    fn rotated(&self, p: &NPoint2d, ang: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, p: &NPnt2d, s: f64);
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self
+    fn scale(&mut self, p: &NPoint2d, s: f64);
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, t: &NTrsf2d);
@@ -59,8 +59,8 @@ pub trait Lin2d {
     fn translated_vec(&self, v: &NVec2d) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d);
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -76,7 +76,7 @@ impl Lin2d for NLin2d {
     /// Creates a line corresponding to the X-axis of the reference coordinate system.
     fn new() -> Self {
         NLin2d {
-            pos: NAx2d::new(&NPnt2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
+            pos: NAx2d::new(&NPoint2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
         }
     }
 
@@ -86,7 +86,7 @@ impl Lin2d for NLin2d {
     }
 
     /// Creates a line passing through a point with a given direction.
-    fn new_with_point_dir(p: &NPnt2d, v: &NDir2d) -> Self {
+    fn new_with_point_dir(p: &NPoint2d, v: &NDir2d) -> Self {
         NLin2d {
             pos: NAx2d::new(p, v),
         }
@@ -98,7 +98,7 @@ impl Lin2d for NLin2d {
         if norm2 <= NGP::resolution() {
             return Err(NErrors::ConstructionError);
         }
-        let p = NPnt2d::new(-a * c / norm2, -b * c / norm2);
+        let p = NPoint2d::new(-a * c / norm2, -b * c / norm2);
         let v = NDir2d::new(-b, a)?;
         Ok(NLin2d {
             pos: NAx2d::new(&p, &v),
@@ -123,7 +123,7 @@ impl Lin2d for NLin2d {
     }
 
     /// Sets the location point (origin) of the line.
-    fn set_location(&mut self, p: &NPnt2d) {
+    fn set_location(&mut self, p: &NPoint2d) {
         self.pos.set_location(p);
     }
 
@@ -146,7 +146,7 @@ impl Lin2d for NLin2d {
     }
 
     /// Returns the location point (origin) of the line.
-    fn location(&self) -> &NPnt2d {
+    fn location(&self) -> &NPoint2d {
         self.pos.location()
     }
 
@@ -161,12 +161,12 @@ impl Lin2d for NLin2d {
     }
 
     /// Checks if the line contains a point within a linear tolerance.
-    fn contains(&self, p: &NPnt2d, linear_tolerance: f64) -> bool {
+    fn contains(&self, p: &NPoint2d, linear_tolerance: f64) -> bool {
         self.distance_to_point(p) <= linear_tolerance
     }
 
     /// Computes the distance from the line to a point.
-    fn distance_to_point(&self, p: &NPnt2d) -> f64 {
+    fn distance_to_point(&self, p: &NPoint2d) -> f64 {
         let mut coord = p.xy();
         coord.subtract(&self.pos.location().xy());
         let val = coord.crossed(&self.pos.direction().xy());
@@ -183,7 +183,7 @@ impl Lin2d for NLin2d {
     }
 
     /// Computes the square distance from the line to a point.
-    fn square_distance_to_point(&self, p: &NPnt2d) -> f64 {
+    fn square_distance_to_point(&self, p: &NPoint2d) -> f64 {
         let mut coord = p.xy();
         coord.subtract(&self.pos.location().xy());
         let d = coord.crossed(&self.pos.direction().xy());
@@ -200,18 +200,18 @@ impl Lin2d for NLin2d {
     }
 
     /// Computes a line normal to this line passing through a point.
-    fn normal(&self, p: &NPnt2d) -> Self {
+    fn normal(&self, p: &NPoint2d) -> Self {
         let dir = NDir2d::new(-self.pos.direction().y(), self.pos.direction().x()).unwrap();
         NLin2d::new_with_point_dir(p, &dir)
     }
 
     /// Mirrors the line about a point.
-    fn mirror_pnt(&mut self, p: &NPnt2d) {
+    fn mirror_pnt(&mut self, p: &NPoint2d) {
         self.pos.mirror_pnt(p);
     }
 
     /// Returns a line mirrored about a point.
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self {
         let mut l = self.clone();
         l.mirror_pnt(p);
         l
@@ -230,24 +230,24 @@ impl Lin2d for NLin2d {
     }
 
     /// Rotates the line about a point.
-    fn rotate(&mut self, p: &NPnt2d, ang: f64) {
+    fn rotate(&mut self, p: &NPoint2d, ang: f64) {
         self.pos.rotate(p, ang);
     }
 
     /// Returns a rotated line.
-    fn rotated(&self, p: &NPnt2d, ang: f64) -> Self {
+    fn rotated(&self, p: &NPoint2d, ang: f64) -> Self {
         let mut l = self.clone();
         l.rotate(p, ang);
         l
     }
 
     /// Scales the line about a point.
-    fn scale(&mut self, p: &NPnt2d, s: f64) {
+    fn scale(&mut self, p: &NPoint2d, s: f64) {
         self.pos.scale(p, s);
     }
 
     /// Returns a scaled line.
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self {
         let mut l = self.clone();
         l.scale(p, s);
         l
@@ -278,12 +278,12 @@ impl Lin2d for NLin2d {
     }
 
     /// Translates the line from one point to another.
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d) {
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
         self.pos.translate_pnts(p1, p2);
     }
 
     /// Returns a translated line from one point to another.
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self {
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut l = self.clone();
         l.translate_pnts(p1, p2);
         l
@@ -310,21 +310,21 @@ mod tests {
     use super::*;
 
     fn lin2d() -> NLin2d {
-        NLin2d::new_with_point_dir(&NPnt2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap())
+        NLin2d::new_with_point_dir(&NPoint2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap())
     }
 
     #[test]
     fn test_new() {
         let l = NLin2d::new();
         assert_eq!(l.direction(), &NDir2d::new(1.0, 0.0).unwrap());
-        assert_eq!(l.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(l.location(), &NPoint2d::new(0.0, 0.0));
     }
 
     #[test]
     fn test_new_with_point_dir() {
         let l = lin2d();
         assert_eq!(l.direction(), &NDir2d::new(1.0, 0.0).unwrap());
-        assert_eq!(l.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(l.location(), &NPoint2d::new(0.0, 0.0));
     }
 
     #[test]
@@ -334,7 +334,7 @@ mod tests {
             l.direction()
                 .is_parallel(&NDir2d::new(0.0, 1.0).unwrap(), 1e-9)
         );
-        assert_eq!(l.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(l.location(), &NPoint2d::new(0.0, 0.0));
         assert!(matches!(
             NLin2d::new_with_coefficients(0.0, 0.0, 1.0),
             Err(NErrors::ConstructionError)
@@ -351,7 +351,7 @@ mod tests {
     #[test]
     fn test_setters() {
         let mut l = lin2d();
-        let p = NPnt2d::new(1.0, 2.0);
+        let p = NPoint2d::new(1.0, 2.0);
         l.set_location(&p);
         assert_eq!(l.location(), &p);
         let v = NDir2d::new(0.0, 1.0).unwrap();
@@ -371,39 +371,39 @@ mod tests {
     #[test]
     fn test_distances() {
         let l = lin2d();
-        let p = NPnt2d::new(0.0, 1.0);
+        let p = NPoint2d::new(0.0, 1.0);
         assert!((l.distance_to_point(&p) - 1.0).abs() < 1e-9);
         assert!((l.square_distance_to_point(&p) - 1.0).abs() < 1e-9);
 
         let l2 =
-            NLin2d::new_with_point_dir(&NPnt2d::new(0.0, 1.0), &NDir2d::new(1.0, 0.0).unwrap());
+            NLin2d::new_with_point_dir(&NPoint2d::new(0.0, 1.0), &NDir2d::new(1.0, 0.0).unwrap());
         assert!((l.distance_to_line(&l2) - 1.0).abs() < 1e-9);
         assert!((l.square_distance_to_line(&l2) - 1.0).abs() < 1e-9);
 
         let l3 =
-            NLin2d::new_with_point_dir(&NPnt2d::new(0.0, 1.0), &NDir2d::new(0.0, 1.0).unwrap());
+            NLin2d::new_with_point_dir(&NPoint2d::new(0.0, 1.0), &NDir2d::new(0.0, 1.0).unwrap());
         assert!((l.distance_to_line(&l3) - 0.0).abs() < 1e-9);
     }
 
     #[test]
     fn test_contains() {
         let l = lin2d();
-        assert!(l.contains(&NPnt2d::new(1.0, 0.0), 1e-9));
-        assert!(!l.contains(&NPnt2d::new(1.0, 1.0), 1e-9));
+        assert!(l.contains(&NPoint2d::new(1.0, 0.0), 1e-9));
+        assert!(!l.contains(&NPoint2d::new(1.0, 1.0), 1e-9));
     }
 
     #[test]
     fn test_angle() {
         let l1 = lin2d();
         let l2 =
-            NLin2d::new_with_point_dir(&NPnt2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
+            NLin2d::new_with_point_dir(&NPoint2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
         assert!((l1.angle(&l2) - std::f64::consts::PI / 2.0).abs() < 1e-9);
     }
 
     #[test]
     fn test_normal() {
         let l = lin2d();
-        let p = NPnt2d::new(0.0, 1.0);
+        let p = NPoint2d::new(0.0, 1.0);
         let n = l.normal(&p);
         assert!(
             n.direction()
@@ -415,11 +415,11 @@ mod tests {
     #[test]
     fn test_transformations() {
         let l = lin2d();
-        let mut l_scaled = l.scaled(&NPnt2d::new(0.0, 0.0), 2.0);
-        assert_eq!(l_scaled.location(), &NPnt2d::new(0.0, 0.0));
+        let mut l_scaled = l.scaled(&NPoint2d::new(0.0, 0.0), 2.0);
+        assert_eq!(l_scaled.location(), &NPoint2d::new(0.0, 0.0));
 
-        let mut l_mirrored = l.mirrored_pnt(&NPnt2d::new(0.0, 1.0));
-        assert_eq!(l_mirrored.location(), &NPnt2d::new(0.0, 2.0));
+        let mut l_mirrored = l.mirrored_pnt(&NPoint2d::new(0.0, 1.0));
+        assert_eq!(l_mirrored.location(), &NPoint2d::new(0.0, 2.0));
     }
 
     #[test]

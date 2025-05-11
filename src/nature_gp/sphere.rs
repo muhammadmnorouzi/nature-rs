@@ -3,19 +3,19 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use nature_errors::NatureError;
+use nature_errors::NErrors;
 
-use crate::gp::{NPnt, NVec, NAx1, NAx2, NAx3, NTrsf};
+use crate::gp::{NPoint3d, NVec, NAx1, NAx2, NAx3, NTrsf};
 
 // Trait to define the behavior of a sphere
 pub trait Sphere {
     fn new() -> Self;
-    fn new_with_position_and_radius(pos: &NAx3, radius: f64) -> Result<Self, NatureError>
+    fn new_with_position_and_radius(pos: &NAx3, radius: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn set_location(&mut self, loc: &NPnt);
+    fn set_location(&mut self, loc: &NPoint3d);
     fn set_position(&mut self, pos: &NAx3);
-    fn set_radius(&mut self, radius: f64) -> Result<(), NatureError>;
+    fn set_radius(&mut self, radius: f64) -> Result<(), NErrors>;
     fn area(&self) -> f64;
     fn coefficients(
         &self,
@@ -33,14 +33,14 @@ pub trait Sphere {
     fn u_reverse(&mut self);
     fn v_reverse(&mut self);
     fn direct(&self) -> bool;
-    fn location(&self) -> NPnt;
+    fn location(&self) -> NPoint3d;
     fn position(&self) -> NAx3;
     fn radius(&self) -> f64;
     fn volume(&self) -> f64;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_point(&mut self, point: &NPnt);
-    fn mirrored_point(&self, point: &NPnt) -> Self
+    fn mirror_point(&mut self, point: &NPoint3d);
+    fn mirrored_point(&self, point: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_axis(&mut self, axis: &NAx1);
@@ -55,8 +55,8 @@ pub trait Sphere {
     fn rotated(&self, axis: &NAx1, angle: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, point: &NPnt, scale: f64);
-    fn scaled(&self, point: &NPnt, scale: f64) -> Self
+    fn scale(&mut self, point: &NPoint3d, scale: f64);
+    fn scaled(&self, point: &NPoint3d, scale: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, trsf: &NTrsf);
@@ -67,8 +67,8 @@ pub trait Sphere {
     fn translated_vec(&self, vec: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_points(&mut self, p1: &NPnt, p2: &NPnt);
-    fn translated_points(&self, p1: &NPnt, p2: &NPnt) -> Self
+    fn translate_points(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_points(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -91,9 +91,9 @@ impl Sphere for NSphere {
     }
 
     /// Constructs a sphere with a position and radius.
-    fn new_with_position_and_radius(pos: &NAx3, radius: f64) -> Result<Self, NatureError> {
+    fn new_with_position_and_radius(pos: &NAx3, radius: f64) -> Result<Self, NErrors> {
         if radius < 0.0 {
-            return Err(NatureError::InvalidGeometry(
+            return Err(NErrors::InvalidGeometry(
                 "Sphere radius must be non-negative".to_string(),
             ));
         }
@@ -104,7 +104,7 @@ impl Sphere for NSphere {
     }
 
     /// Changes the center of the sphere.
-    fn set_location(&mut self, loc: &NPnt) {
+    fn set_location(&mut self, loc: &NPoint3d) {
         self.pos.set_location(loc);
     }
 
@@ -114,9 +114,9 @@ impl Sphere for NSphere {
     }
 
     /// Sets the radius of the sphere.
-    fn set_radius(&mut self, radius: f64) -> Result<(), NatureError> {
+    fn set_radius(&mut self, radius: f64) -> Result<(), NErrors> {
         if radius < 0.0 {
-            return Err(NatureError::InvalidGeometry(
+            return Err(NErrors::InvalidGeometry(
                 "Sphere radius must be non-negative".to_string(),
             ));
         }
@@ -186,7 +186,7 @@ impl Sphere for NSphere {
     }
 
     /// Returns the center of the sphere.
-    fn location(&self) -> NPnt {
+    fn location(&self) -> NPoint3d {
         self.pos.location()
     }
 
@@ -216,12 +216,12 @@ impl Sphere for NSphere {
     }
 
     /// Mirrors the sphere with respect to a point.
-    fn mirror_point(&mut self, point: &NPnt) {
+    fn mirror_point(&mut self, point: &NPoint3d) {
         self.pos.mirror_point(point);
     }
 
     /// Returns a mirrored sphere with respect to a point.
-    fn mirrored_point(&self, point: &NPnt) -> Self {
+    fn mirrored_point(&self, point: &NPoint3d) -> Self {
         let mut sphere = self.clone();
         sphere.pos.mirror_point(point);
         sphere
@@ -264,13 +264,13 @@ impl Sphere for NSphere {
     }
 
     /// Scales the sphere with respect to a point.
-    fn scale(&mut self, point: &NPnt, scale: f64) {
+    fn scale(&mut self, point: &NPoint3d, scale: f64) {
         self.pos.scale(point, scale);
         self.radius *= scale.abs();
     }
 
     /// Returns a scaled sphere.
-    fn scaled(&self, point: &NPnt, scale: f64) -> Self {
+    fn scaled(&self, point: &NPoint3d, scale: f64) -> Self {
         let mut sphere = self.clone();
         sphere.pos.scale(point, scale);
         sphere.radius *= scale.abs();
@@ -304,12 +304,12 @@ impl Sphere for NSphere {
     }
 
     /// Translates the sphere from one point to another.
-    fn translate_points(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn translate_points(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.pos.translate_points(p1, p2);
     }
 
     /// Returns a translated sphere from one point to another.
-    fn translated_points(&self, p1: &NPnt, p2: &NPnt) -> Self {
+    fn translated_points(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut sphere = self.clone();
         sphere.pos.translate_points(p1, p2);
         sphere
@@ -354,7 +354,7 @@ mod tests {
     fn test_new_negative_radius() {
         let pos = NAx3::new();
         let result = NSphere::new_with_position_and_radius(&pos, -1.0);
-        assert!(matches!(result, Err(NatureError::InvalidGeometry(_))));
+        assert!(matches!(result, Err(NErrors::InvalidGeometry(_))));
     }
 
     #[test]
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn test_scale() {
         let mut sphere = create_test_sphere();
-        let point = NPnt::new_with_coords(0.0, 0.0, 0.0);
+        let point = NPoint3d::new_with_coords(0.0, 0.0, 0.0);
         sphere.scale(&point, 2.0);
         assert_eq!(sphere.radius(), 2.0);
         sphere.scale(&point, -2.0);

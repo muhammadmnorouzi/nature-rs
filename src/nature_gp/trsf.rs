@@ -2,7 +2,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NAx1, NAx2, NAx3, NMat, NPnt, NQuaternion, NTrsf2d, NTrsfForm, NVec, NXYZ, NatureError};
+use crate::gp::{NAx1, NAx2, NAx3, NMat, NPoint3d, NQuaternion, NTrsf2d, NTrsfForm, NVec, NXYZ, NErrors};
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -14,23 +14,23 @@ mod gp {
 pub trait Trsf {
     fn new() -> Self;
     fn new_from_trsf2d(t: &NTrsf2d) -> Self;
-    fn set_mirror_pnt(&mut self, p: &NPnt);
+    fn set_mirror_pnt(&mut self, p: &NPoint3d);
     fn set_mirror_ax1(&mut self, a1: &NAx1);
     fn set_mirror_ax2(&mut self, a2: &NAx2);
     fn set_rotation_ax1(&mut self, a1: &NAx1, ang: f64);
     fn set_rotation_quat(&mut self, r: &NQuaternion);
     fn set_rotation_part(&mut self, r: &NQuaternion);
-    fn set_scale(&mut self, p: &NPnt, s: f64) -> Result<(), NatureError>;
+    fn set_scale(&mut self, p: &NPoint3d, s: f64) -> Result<(), NErrors>;
     fn set_displacement(&mut self, from_a1: &NAx3, to_a2: &NAx3);
     fn set_transformation_ax3(&mut self, from_a1: &NAx3, to_a2: &NAx3);
     fn set_transformation_ax3_single(&mut self, to_a2: &NAx3);
     fn set_transformation_quat_vec(&mut self, r: &NQuaternion, t: &NVec);
     fn set_translation_vec(&mut self, v: &NVec);
-    fn set_translation_pnts(&mut self, p1: &NPnt, p2: &NPnt);
+    fn set_translation_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
     fn set_translation_part(&mut self, v: &NVec);
-    fn set_scale_factor(&mut self, s: f64) -> Result<(), NatureError>;
+    fn set_scale_factor(&mut self, s: f64) -> Result<(), NErrors>;
     fn set_form(&mut self, p: NTrsfForm);
-    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a14: f64, a21: f64, a22: f64, a23: f64, a24: f64, a31: f64, a32: f64, a33: f64, a34: f64) -> Result<(), NatureError>;
+    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a14: f64, a21: f64, a22: f64, a23: f64, a24: f64, a31: f64, a32: f64, a33: f64, a34: f64) -> Result<(), NErrors>;
     fn is_negative(&self) -> bool;
     fn form(&self) -> NTrsfForm;
     fn scale_factor(&self) -> f64;
@@ -39,14 +39,14 @@ pub trait Trsf {
     fn get_rotation_with_axis(&self) -> (NXYZ, f64);
     fn vectorial_part(&self) -> NMat;
     fn h_vectorial_part(&self) -> NMat;
-    fn value(&self, row: i32, col: i32) -> Result<f64, NatureError>;
-    fn invert(&mut self) -> Result<(), NatureError>;
-    fn inverted(&self) -> Result<Self, NatureError> where Self: Sized;
+    fn value(&self, row: i32, col: i32) -> Result<f64, NErrors>;
+    fn invert(&mut self) -> Result<(), NErrors>;
+    fn inverted(&self) -> Result<Self, NErrors> where Self: Sized;
     fn multiply(&mut self, t: &Self);
     fn multiplied(&self, t: &Self) -> Self where Self: Sized;
     fn pre_multiply(&mut self, t: &Self);
-    fn power(&mut self, n: i32) -> Result<(), NatureError>;
-    fn powered(&self, n: i32) -> Result<Self, NatureError> where Self: Sized;
+    fn power(&mut self, n: i32) -> Result<(), NErrors>;
+    fn powered(&self, n: i32) -> Result<Self, NErrors> where Self: Sized;
     fn transforms_xyz(&self, coord: &mut NXYZ);
     fn transforms_coords(&self, x: &mut f64, y: &mut f64, z: &mut f64);
     fn orthogonalize(&mut self);
@@ -94,7 +94,7 @@ impl Trsf for NTrsf {
     }
 
     /// Sets the transformation to a point mirror.
-    fn set_mirror_pnt(&mut self, p: &NPnt) {
+    fn set_mirror_pnt(&mut self, p: &NPoint3d) {
         self.shape = NTrsfForm::PntMirror;
         self.scale = -1.0;
         self.loc = p.xyz();
@@ -189,10 +189,10 @@ impl Trsf for NTrsf {
     }
 
     /// Sets the transformation to a scale.
-    fn set_scale(&mut self, p: &NPnt, s: f64) -> Result<(), NatureError> {
+    fn set_scale(&mut self, p: &NPoint3d, s: f64) -> Result<(), NErrors> {
         let as = s.abs();
         if as <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.shape = NTrsfForm::Scale;
         self.scale = s;
@@ -284,7 +284,7 @@ impl Trsf for NTrsf {
     }
 
     /// Sets the transformation to a translation between two points.
-    fn set_translation_pnts(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn set_translation_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.shape = NTrsfForm::Translation;
         self.scale = 1.0;
         self.matrix = NMat::new_identity();
@@ -315,10 +315,10 @@ impl Trsf for NTrsf {
     }
 
     /// Modifies the scale factor.
-    fn set_scale_factor(&mut self, s: f64) -> Result<(), NatureError> {
+    fn set_scale_factor(&mut self, s: f64) -> Result<(), NErrors> {
         let as = s.abs();
         if as <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.scale = s;
         let unit = (s - 1.0).abs() <= gp::resolution();
@@ -364,7 +364,7 @@ impl Trsf for NTrsf {
     }
 
     /// Sets the transformation coefficients.
-    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a14: f64, a21: f64, a22: f64, a23: f64, a24: f64, a31: f64, a32: f64, a33: f64, a34: f64) -> Result<(), NatureError> {
+    fn set_values(&mut self, a11: f64, a12: f64, a13: f64, a14: f64, a21: f64, a22: f64, a23: f64, a24: f64, a31: f64, a32: f64, a33: f64, a34: f64) -> Result<(), NErrors> {
         let col1 = NXYZ::new(a11, a21, a31);
         let col2 = NXYZ::new(a12, a22, a32);
         let col3 = NXYZ::new(a13, a23, a33);
@@ -373,7 +373,7 @@ impl Trsf for NTrsf {
         let s = m.determinant();
         let as = s.abs();
         if as < gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.scale = if s > 0.0 { s.powf(1.0 / 3.0) } else { -((-s).powf(1.0 / 3.0)) };
         m.divide(self.scale);
@@ -441,9 +441,9 @@ impl Trsf for NTrsf {
     }
 
     /// Returns the coefficient at the specified row and column.
-    fn value(&self, row: i32, col: i32) -> Result<f64, NatureError> {
+    fn value(&self, row: i32, col: i32) -> Result<f64, NErrors> {
         if row < 1 || row > 3 || col < 1 || col > 4 {
-            return Err(NatureError::OutOfRange);
+            return Err(NErrors::OutOfRange);
         }
         if col < 4 {
             Ok(self.scale * self.matrix.value(row as usize, col as usize).unwrap())
@@ -453,7 +453,7 @@ impl Trsf for NTrsf {
     }
 
     /// Inverts the transformation.
-    fn invert(&mut self) -> Result<(), NatureError> {
+    fn invert(&mut self) -> Result<(), NErrors> {
         if self.shape == NTrsfForm::Identity {
             Ok(())
         } else if self.shape == NTrsfForm::Translation || self.shape == NTrsfForm::PntMirror {
@@ -461,14 +461,14 @@ impl Trsf for NTrsf {
             Ok(())
         } else if self.shape == NTrsfForm::Scale {
             if self.scale.abs() <= gp::resolution() {
-                return Err(NatureError::InvalidConstructionParameters);
+                return Err(NErrors::InvalidConstructionParameters);
             }
             self.scale = 1.0 / self.scale;
             self.loc.multiply_scalar(-self.scale);
             Ok(())
         } else {
             if self.scale.abs() <= gp::resolution() {
-                return Err(NatureError::InvalidConstructionParameters);
+                return Err(NErrors::InvalidConstructionParameters);
             }
             self.scale = 1.0 / self.scale;
             self.matrix.transpose();
@@ -481,7 +481,7 @@ impl Trsf for NTrsf {
     }
 
     /// Returns the inverted transformation.
-    fn inverted(&self) -> Result<Self, NatureError> {
+    fn inverted(&self) -> Result<Self, NErrors> {
         let mut result = self.clone();
         result.invert()?;
         Ok(result)
@@ -698,7 +698,7 @@ impl Trsf for NTrsf {
     }
 
     /// Computes the transformation raised to a power.
-    fn power(&mut self, n: i32) -> Result<(), NatureError> {
+    fn power(&mut self, n: i32) -> Result<(), NErrors> {
         if self.shape == NTrsfForm::Identity {
             return Ok(());
         }
@@ -829,7 +829,7 @@ impl Trsf for NTrsf {
     }
 
     /// Returns the transformation raised to a power.
-    fn powered(&self, n: i32) -> Result<Self, NatureError> {
+    fn powered(&self, n: i32) -> Result<Self, NErrors> {
         let mut result = self.clone();
         result.power(n)?;
         Ok(result)
@@ -1030,7 +1030,7 @@ mod tests {
     #[test]
     fn test_set_mirror_pnt() {
         let mut t = NTrsf::new();
-        let p = NPnt::new(1.0, 2.0, 3.0);
+        let p = NPoint3d::new(1.0, 2.0, 3.0);
         t.set_mirror_pnt(&p);
         assert_eq!(t.form(), NTrsfForm::PntMirror);
         assert_eq!(t.scale_factor(), -1.0);
@@ -1040,7 +1040,7 @@ mod tests {
     #[test]
     fn test_set_scale() {
         let mut t = NTrsf::new();
-        let p = NPnt::new(1.0, 0.0, 0.0);
+        let p = NPoint3d::new(1.0, 0.0, 0.0);
         t.set_scale(&p, 2.0).unwrap();
         assert_eq!(t.form(), NTrsfForm::Scale);
         assert_eq!(t.scale_factor(), 2.0);

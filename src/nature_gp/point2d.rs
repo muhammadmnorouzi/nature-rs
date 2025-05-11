@@ -234,7 +234,7 @@ impl Point2d for NPoint2d {
     }
 }
 
-// Implement std::hash::Hash for NPnt
+// Implement std::hash::Hash for NPoint3d
 impl std::hash::Hash for NPoint2d {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         let x_bits = self.x().to_bits();

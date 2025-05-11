@@ -402,7 +402,7 @@ mod tests {
     }
 
     fn ax2d() -> NAx2d {
-        NAx2d::new(&NPnt2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap())
+        NAx2d::new(&NPoint2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap())
     }
 
     #[test]

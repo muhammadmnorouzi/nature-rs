@@ -2,7 +2,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::NatureError;
+use crate::gp::NErrors;
 
 mod gp {
     pub fn resolution_f32() -> f32 {
@@ -183,12 +183,12 @@ impl NVec3f {
     }
 
     /// Sets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn set_coord(&mut self, index: i32, value: f32) -> Result<(), NatureError> {
+    pub fn set_coord(&mut self, index: i32, value: f32) -> Result<(), NErrors> {
         match index {
             1 => self.coord.set_x(value),
             2 => self.coord.set_y(value),
             3 => self.coord.set_z(value),
-            _ => return Err(NatureError::OutOfRange),
+            _ => return Err(NErrors::OutOfRange),
         }
         Ok(())
     }
@@ -214,12 +214,12 @@ impl NVec3f {
     }
 
     /// Gets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn coord(&self, index: i32) -> Result<f32, NatureError> {
+    pub fn coord(&self, index: i32) -> Result<f32, NErrors> {
         match index {
             1 => Ok(self.coord.x()),
             2 => Ok(self.coord.y()),
             3 => Ok(self.coord.z()),
-            _ => Err(NatureError::OutOfRange),
+            _ => Err(NErrors::OutOfRange),
         }
     }
 
@@ -252,11 +252,11 @@ impl NVec3f {
     }
 
     /// Computes the angle between two vectors (0 to PI radians).
-    pub fn angle(&self, other: &NVec3f) -> Result<f32, NatureError> {
+    pub fn angle(&self, other: &NVec3f) -> Result<f32, NErrors> {
         let norm = self.magnitude();
         let other_norm = other.magnitude();
         if norm <= gp::resolution_f32() || other_norm <= gp::resolution_f32() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let dot = self.dot(other) / (norm * other_norm);
         // Clamp to [-1, 1] to handle floating-point errors
@@ -311,18 +311,18 @@ impl NVec3f {
     }
 
     /// Divides the vector by a scalar.
-    pub fn divide(&mut self, scalar: f32) -> Result<(), NatureError> {
+    pub fn divide(&mut self, scalar: f32) -> Result<(), NErrors> {
         if scalar.abs() <= gp::resolution_f32() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.coord.divide(scalar);
         Ok(())
     }
 
     /// Returns the vector divided by a scalar.
-    pub fn divided(&self, scalar: f32) -> Result<NVec3f, NatureError> {
+    pub fn divided(&self, scalar: f32) -> Result<NVec3f, NErrors> {
         if scalar.abs() <= gp::resolution_f32() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         Ok(NVec3f {
             coord: self.coord.divided(scalar),
@@ -357,20 +357,20 @@ impl NVec3f {
     }
 
     /// Normalizes the vector.
-    pub fn normalize(&mut self) -> Result<(), NatureError> {
+    pub fn normalize(&mut self) -> Result<(), NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution_f32() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         self.coord.divide(mag);
         Ok(())
     }
 
     /// Returns a normalized copy of the vector.
-    pub fn normalized(&self) -> Result<NVec3f, NatureError> {
+    pub fn normalized(&self) -> Result<NVec3f, NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution_f32() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         Ok(NVec3f {
             coord: self.coord.divided(mag),

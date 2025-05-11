@@ -1,11 +1,7 @@
 use std::io::Write;
 
 use serde::{Deserialize, Serialize};
-
-use crate::{
-    gp::{NAx1, NAx2, NDir, NLin, NPnt, NTrsf, NVec},
-    nature_errors::NErrors,
-};
+use super::prelude::*;
 
 // Trait to define the behavior of a parabola in 3D space
 pub trait Parab {
@@ -13,22 +9,22 @@ pub trait Parab {
     fn new_with_ax2_focal(a2: &NAx2, focal: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn new_with_directrix_focus(d: &NAx1, f: &NPnt) -> Self;
+    fn new_with_directrix_focus(d: &NAx1, f: &NPoint3d) -> Self;
     fn set_axis(&mut self, a1: &NAx1) -> Result<(), NErrors>;
     fn set_focal(&mut self, focal: f64) -> Result<(), NErrors>;
-    fn set_location(&mut self, p: &NPnt);
+    fn set_location(&mut self, p: &NPoint3d);
     fn set_position(&mut self, a2: &NAx2);
     fn axis(&self) -> NAx1;
     fn directrix(&self) -> NAx1;
     fn focal(&self) -> f64;
-    fn focus(&self) -> NPnt;
-    fn location(&self) -> NPnt;
+    fn focus(&self) -> NPoint3d;
+    fn location(&self) -> NPoint3d;
     fn parameter(&self) -> f64;
     fn position(&self) -> NAx2;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: &NPnt);
-    fn mirrored_pnt(&self, p: &NPnt) -> Self
+    fn mirror_pnt(&mut self, p: &NPoint3d);
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -43,8 +39,8 @@ pub trait Parab {
     fn rotated(&self, a1: &NAx1, ang: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, p: &NPnt, s: f64);
-    fn scaled(&self, p: &NPnt, s: f64) -> Self
+    fn scale(&mut self, p: &NPoint3d, s: f64);
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, t: &NTrsf);
@@ -55,8 +51,8 @@ pub trait Parab {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt);
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -74,7 +70,7 @@ impl Parab for NParab {
     fn new() -> Self {
         NParab {
             pos: NAx2::new(
-                &NPnt::new(f64::MAX, f64::MAX, f64::MAX),
+                &NPoint3d::new(f64::MAX, f64::MAX, f64::MAX),
                 &NDir::new(1.0, 0.0, 0.0),
                 &NDir::new(0.0, 1.0, 0.0),
             )
@@ -95,13 +91,13 @@ impl Parab for NParab {
     }
 
     /// Creates a parabola from a directrix and focus point.
-    fn new_with_directrix_focus(d: &NAx1, f: &NPnt) -> Self {
+    fn new_with_directrix_focus(d: &NAx1, f: &NPoint3d) -> Self {
         let lin = NLin::new_with_ax1(d);
         let focal_length = lin.distance(f) / 2.0;
         let ax = lin.normal(f).position();
         let ay = lin.position();
         let dd = ax.direction();
-        let vertex = NPnt::new(
+        let vertex = NPoint3d::new(
             f.x() - focal_length * dd.x(),
             f.y() - focal_length * dd.y(),
             f.z() - focal_length * dd.z(),
@@ -126,7 +122,7 @@ impl Parab for NParab {
     }
 
     /// Changes the location (vertex) of the parabola.
-    fn set_location(&mut self, p: &NPnt) {
+    fn set_location(&mut self, p: &NPoint3d) {
         self.pos.set_location(p);
     }
 
@@ -144,7 +140,7 @@ impl Parab for NParab {
     fn directrix(&self) -> NAx1 {
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        let directrix_p = NPnt::new(
+        let directrix_p = NPoint3d::new(
             p.x() - self.focal_length * d.x(),
             p.y() - self.focal_length * d.y(),
             p.z() - self.focal_length * d.z(),
@@ -158,10 +154,10 @@ impl Parab for NParab {
     }
 
     /// Computes the focus of the parabola.
-    fn focus(&self) -> NPnt {
+    fn focus(&self) -> NPoint3d {
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        NPnt::new(
+        NPoint3d::new(
             p.x() + self.focal_length * d.x(),
             p.y() + self.focal_length * d.y(),
             p.z() + self.focal_length * d.z(),
@@ -169,7 +165,7 @@ impl Parab for NParab {
     }
 
     /// Returns the vertex of the parabola.
-    fn location(&self) -> NPnt {
+    fn location(&self) -> NPoint3d {
         self.pos.location()
     }
 
@@ -194,12 +190,12 @@ impl Parab for NParab {
     }
 
     /// Mirrors the parabola with respect to a point.
-    fn mirror_pnt(&mut self, p: &NPnt) {
+    fn mirror_pnt(&mut self, p: &NPoint3d) {
         self.pos.mirror_pnt(p);
     }
 
     /// Returns the parabola mirrored with respect to a point.
-    fn mirrored_pnt(&self, p: &NPnt) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
         let mut prb = self.clone();
         prb.mirror_pnt(p);
         prb
@@ -242,13 +238,13 @@ impl Parab for NParab {
     }
 
     /// Scales the parabola with respect to a point.
-    fn scale(&mut self, p: &NPnt, s: f64) {
+    fn scale(&mut self, p: &NPoint3d, s: f64) {
         self.focal_length *= s.abs();
         self.pos.scale(p, s);
     }
 
     /// Returns the parabola scaled with respect to a point.
-    fn scaled(&self, p: &NPnt, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self {
         let mut prb = self.clone();
         prb.scale(p, s);
         prb
@@ -280,12 +276,12 @@ impl Parab for NParab {
     }
 
     /// Translates the parabola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.pos.translate_pnts(p1, p2);
     }
 
     /// Returns the parabola translated from one point to another.
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self {
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut prb = self.clone();
         prb.translate_pnts(p1, p2);
         prb
@@ -309,7 +305,7 @@ mod tests {
 
     fn create_test_parabola() -> NParab {
         let a2 = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0),
             &NDir::new(1.0, 0.0, 0.0),
         )
@@ -326,7 +322,7 @@ mod tests {
     #[test]
     fn test_new_with_ax2_focal() {
         let a2 = NAx2::new(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 0.0, 1.0),
             &NDir::new(1.0, 0.0, 0.0),
         )
@@ -342,11 +338,11 @@ mod tests {
 
     #[test]
     fn test_new_with_directrix_focus() {
-        let d = NAx1::new(&NPnt::new(0.0, -1.0, 0.0), &NDir::new(0.0, 1.0, 0.0));
-        let f = NPnt::new(0.0, 1.0, 0.0);
+        let d = NAx1::new(&NPoint3d::new(0.0, -1.0, 0.0), &NDir::new(0.0, 1.0, 0.0));
+        let f = NPoint3d::new(0.0, 1.0, 0.0);
         let parab = NParab::new_with_directrix_focus(&d, &f);
         assert!((parab.focal_length - 1.0).abs() < 1e-9);
-        assert_eq!(parab.location(), NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(parab.location(), NPoint3d::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -364,7 +360,7 @@ mod tests {
     fn test_directrix() {
         let parab = create_test_parabola();
         let directrix = parab.directrix();
-        assert_eq!(directrix.location(), NPnt::new(-1.0, 0.0, 0.0));
+        assert_eq!(directrix.location(), NPoint3d::new(-1.0, 0.0, 0.0));
         assert_eq!(directrix.direction(), NDir::new(0.0, 1.0, 0.0));
     }
 
@@ -372,7 +368,7 @@ mod tests {
     fn test_focus() {
         let parab = create_test_parabola();
         let focus = parab.focus();
-        assert_eq!(focus, NPnt::new(1.0, 0.0, 0.0));
+        assert_eq!(focus, NPoint3d::new(1.0, 0.0, 0.0));
     }
 
     #[test]
@@ -384,16 +380,16 @@ mod tests {
     #[test]
     fn test_scale() {
         let mut parab = create_test_parabola();
-        parab.scale(&NPnt::new(0.0, 0.0, 0.0), 2.0);
+        parab.scale(&NPoint3d::new(0.0, 0.0, 0.0), 2.0);
         assert_eq!(parab.focal_length, 2.0);
-        parab.scale(&NPnt::new(0.0, 0.0, 0.0), -2.0);
+        parab.scale(&NPoint3d::new(0.0, 0.0, 0.0), -2.0);
         assert_eq!(parab.focal_length, 2.0); // Abs taken
     }
 
     #[test]
     fn test_transform() {
         let mut parab = create_test_parabola();
-        let t = NTrsf::new_scale(&NPnt::new(0.0, 0.0, 0.0), 2.0);
+        let t = NTrsf::new_scale(&NPoint3d::new(0.0, 0.0, 0.0), 2.0);
         parab.transform(&t);
         assert_eq!(parab.focal_length, 2.0);
     }

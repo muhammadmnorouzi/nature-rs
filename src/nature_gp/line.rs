@@ -2,34 +2,34 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::nature_gp::{NAx1, NAx2, NDir, NGP, NPnt, NTrsf, NVec, NXYZ};
+use crate::nature_gp::{NAx1, NAx2, NDir, NGP, NPoint3d, NTrsf, NVec, NXYZ};
 
 // Trait to define the behavior of a line in 3D space
 pub trait Lin {
     fn new() -> Self;
     fn new_with_axis(a1: &NAx1) -> Self;
-    fn new_with_point_dir(p: &NPnt, v: &NDir) -> Self;
+    fn new_with_point_dir(p: &NPoint3d, v: &NDir) -> Self;
     fn reverse(&mut self);
     fn reversed(&self) -> Self
     where
         Self: Sized;
     fn set_direction(&mut self, v: &NDir);
-    fn set_location(&mut self, p: &NPnt);
+    fn set_location(&mut self, p: &NPoint3d);
     fn set_position(&mut self, a1: &NAx1);
     fn direction(&self) -> &NDir;
-    fn location(&self) -> &NPnt;
+    fn location(&self) -> &NPoint3d;
     fn position(&self) -> &NAx1;
     fn angle(&self, other: &Self) -> f64;
-    fn contains(&self, p: &NPnt, linear_tolerance: f64) -> bool;
-    fn distance_to_point(&self, p: &NPnt) -> f64;
+    fn contains(&self, p: &NPoint3d, linear_tolerance: f64) -> bool;
+    fn distance_to_point(&self, p: &NPoint3d) -> f64;
     fn distance_to_line(&self, other: &Self) -> f64;
-    fn square_distance_to_point(&self, p: &NPnt) -> f64;
+    fn square_distance_to_point(&self, p: &NPoint3d) -> f64;
     fn square_distance_to_line(&self, other: &Self) -> f64;
-    fn normal(&self, p: &NPnt) -> Self
+    fn normal(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
-    fn mirror_pnt(&mut self, p: &NPnt);
-    fn mirrored_pnt(&self, p: &NPnt) -> Self
+    fn mirror_pnt(&mut self, p: &NPoint3d);
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self
     where
         Self: Sized;
     fn mirror_ax1(&mut self, a1: &NAx1);
@@ -44,8 +44,8 @@ pub trait Lin {
     fn rotated(&self, a1: &NAx1, ang: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, p: &NPnt, s: f64);
-    fn scaled(&self, p: &NPnt, s: f64) -> Self
+    fn scale(&mut self, p: &NPoint3d, s: f64);
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, t: &NTrsf);
@@ -56,8 +56,8 @@ pub trait Lin {
     fn translated_vec(&self, v: &NVec) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt);
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d);
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -74,7 +74,7 @@ impl Lin for NLin {
     fn new() -> Self {
         NLin {
             pos: NAx1::new(
-                &NPnt::new(0.0, 0.0, 0.0),
+                &NPoint3d::new(0.0, 0.0, 0.0),
                 &NDir::new(0.0, 0.0, 1.0).unwrap(),
             ),
         }
@@ -86,7 +86,7 @@ impl Lin for NLin {
     }
 
     /// Creates a line passing through a point with a given direction.
-    fn new_with_point_dir(p: &NPnt, v: &NDir) -> Self {
+    fn new_with_point_dir(p: &NPoint3d, v: &NDir) -> Self {
         NLin {
             pos: NAx1::new(p, v),
         }
@@ -110,7 +110,7 @@ impl Lin for NLin {
     }
 
     /// Sets the location point (origin) of the line.
-    fn set_location(&mut self, p: &NPnt) {
+    fn set_location(&mut self, p: &NPoint3d) {
         self.pos.set_location(p);
     }
 
@@ -125,7 +125,7 @@ impl Lin for NLin {
     }
 
     /// Returns the location point (origin) of the line.
-    fn location(&self) -> &NPnt {
+    fn location(&self) -> &NPoint3d {
         self.pos.location()
     }
 
@@ -140,12 +140,12 @@ impl Lin for NLin {
     }
 
     /// Checks if the line contains a point within a linear tolerance.
-    fn contains(&self, p: &NPnt, linear_tolerance: f64) -> bool {
+    fn contains(&self, p: &NPoint3d, linear_tolerance: f64) -> bool {
         self.distance_to_point(p) <= linear_tolerance
     }
 
     /// Computes the distance from the line to a point.
-    fn distance_to_point(&self, p: &NPnt) -> f64 {
+    fn distance_to_point(&self, p: &NPoint3d) -> f64 {
         let mut coord = p.xyz();
         coord.subtract(&self.pos.location().xyz());
         coord.cross(&self.pos.direction().xyz());
@@ -168,7 +168,7 @@ impl Lin for NLin {
     }
 
     /// Computes the square distance from the line to a point.
-    fn square_distance_to_point(&self, p: &NPnt) -> f64 {
+    fn square_distance_to_point(&self, p: &NPoint3d) -> f64 {
         let loc = self.pos.location();
         let mut v = NVec::new(p.x() - loc.x(), p.y() - loc.y(), p.z() - loc.z());
         v.cross(&self.pos.direction());
@@ -182,7 +182,7 @@ impl Lin for NLin {
     }
 
     /// Computes a line normal to this line passing through a point.
-    fn normal(&self, p: &NPnt) -> Self {
+    fn normal(&self, p: &NPoint3d) -> Self {
         let loc = self.pos.location();
         let v = NDir::new(p.x() - loc.x(), p.y() - loc.y(), p.z() - loc.z()).unwrap();
         let dir = self
@@ -193,12 +193,12 @@ impl Lin for NLin {
     }
 
     /// Mirrors the line about a point.
-    fn mirror_pnt(&mut self, p: &NPnt) {
+    fn mirror_pnt(&mut self, p: &NPoint3d) {
         self.pos.mirror_pnt(p);
     }
 
     /// Returns a line mirrored about a point.
-    fn mirrored_pnt(&self, p: &NPnt) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint3d) -> Self {
         let mut l = self.clone();
         l.mirror_pnt(p);
         l
@@ -241,12 +241,12 @@ impl Lin for NLin {
     }
 
     /// Scales the line about a point.
-    fn scale(&mut self, p: &NPnt, s: f64) {
+    fn scale(&mut self, p: &NPoint3d, s: f64) {
         self.pos.scale(p, s);
     }
 
     /// Returns a scaled line.
-    fn scaled(&self, p: &NPnt, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint3d, s: f64) -> Self {
         let mut l = self.clone();
         l.scale(p, s);
         l
@@ -277,12 +277,12 @@ impl Lin for NLin {
     }
 
     /// Translates the line from one point to another.
-    fn translate_pnts(&mut self, p1: &NPnt, p2: &NPnt) {
+    fn translate_pnts(&mut self, p1: &NPoint3d, p2: &NPoint3d) {
         self.pos.translate_pnts(p1, p2);
     }
 
     /// Returns a translated line from one point to another.
-    fn translated_pnts(&self, p1: &NPnt, p2: &NPnt) -> Self {
+    fn translated_pnts(&self, p1: &NPoint3d, p2: &NPoint3d) -> Self {
         let mut l = self.clone();
         l.translate_pnts(p1, p2);
         l
@@ -312,7 +312,7 @@ mod tests {
 
     fn lin() -> NLin {
         NLin::new_with_point_dir(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         )
     }
@@ -321,14 +321,14 @@ mod tests {
     fn test_new() {
         let l = NLin::new();
         assert_eq!(l.direction(), &NDir::new(0.0, 0.0, 1.0).unwrap());
-        assert_eq!(l.location(), &NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(l.location(), &NPoint3d::new(0.0, 0.0, 0.0));
     }
 
     #[test]
     fn test_new_with_point_dir() {
         let l = lin();
         assert_eq!(l.direction(), &NDir::new(1.0, 0.0, 0.0).unwrap());
-        assert_eq!(l.location(), &NPnt::new(0.0, 0.0, 0.0));
+        assert_eq!(l.location(), &NPoint3d::new(0.0, 0.0, 0.0));
     }
 
     #[test]
@@ -341,7 +341,7 @@ mod tests {
     #[test]
     fn test_setters() {
         let mut l = lin();
-        let p = NPnt::new(1.0, 2.0, 3.0);
+        let p = NPoint3d::new(1.0, 2.0, 3.0);
         l.set_location(&p);
         assert_eq!(l.location(), &p);
         let v = NDir::new(0.0, 1.0, 0.0).unwrap();
@@ -352,12 +352,12 @@ mod tests {
     #[test]
     fn test_distances() {
         let l = lin();
-        let p = NPnt::new(0.0, 1.0, 0.0);
+        let p = NPoint3d::new(0.0, 1.0, 0.0);
         assert!((l.distance_to_point(&p) - 1.0).abs() < 1e-9);
         assert!((l.square_distance_to_point(&p) - 1.0).abs() < 1e-9);
 
         let l2 = NLin::new_with_point_dir(
-            &NPnt::new(0.0, 1.0, 0.0),
+            &NPoint3d::new(0.0, 1.0, 0.0),
             &NDir::new(1.0, 0.0, 0.0).unwrap(),
         );
         assert!((l.distance_to_line(&l2) - 1.0).abs() < 1e-9);
@@ -367,15 +367,15 @@ mod tests {
     #[test]
     fn test_contains() {
         let l = lin();
-        assert!(l.contains(&NPnt::new(1.0, 0.0, 0.0), 1e-9));
-        assert!(!l.contains(&NPnt::new(1.0, 1.0, 0.0), 1e-9));
+        assert!(l.contains(&NPoint3d::new(1.0, 0.0, 0.0), 1e-9));
+        assert!(!l.contains(&NPoint3d::new(1.0, 1.0, 0.0), 1e-9));
     }
 
     #[test]
     fn test_angle() {
         let l1 = lin();
         let l2 = NLin::new_with_point_dir(
-            &NPnt::new(0.0, 0.0, 0.0),
+            &NPoint3d::new(0.0, 0.0, 0.0),
             &NDir::new(0.0, 1.0, 0.0).unwrap(),
         );
         assert!((l1.angle(&l2) - std::f64::consts::PI / 2.0).abs() < 1e-9);
@@ -384,7 +384,7 @@ mod tests {
     #[test]
     fn test_normal() {
         let l = lin();
-        let p = NPnt::new(0.0, 1.0, 0.0);
+        let p = NPoint3d::new(0.0, 1.0, 0.0);
         let n = l.normal(&p);
         assert!(
             n.direction()
@@ -396,11 +396,11 @@ mod tests {
     #[test]
     fn test_transformations() {
         let l = lin();
-        let mut l_scaled = l.scaled(&NPnt::new(0.0, 0.0, 0.0), 2.0);
-        assert_eq!(l_scaled.location(), &NPnt::new(0.0, 0.0, 0.0));
+        let mut l_scaled = l.scaled(&NPoint3d::new(0.0, 0.0, 0.0), 2.0);
+        assert_eq!(l_scaled.location(), &NPoint3d::new(0.0, 0.0, 0.0));
 
-        let mut l_mirrored = l.mirrored_pnt(&NPnt::new(0.0, 1.0, 0.0));
-        assert_eq!(l_mirrored.location(), &NPnt::new(0.0, 2.0, 0.0));
+        let mut l_mirrored = l.mirrored_pnt(&NPoint3d::new(0.0, 1.0, 0.0));
+        assert_eq!(l_mirrored.location(), &NPoint3d::new(0.0, 2.0, 0.0));
     }
 
     #[test]

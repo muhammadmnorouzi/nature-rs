@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 
 use crate::{
-    gp::{NAx2d, NAx22d, NPnt2d, NTrsf2d, NVec2d},
+    gp::{NAx2d, NAx22d, NPoint2d, NTrsf2d, NVec2d},
     nature_errors::NErrors,
 };
 
@@ -13,7 +13,7 @@ pub trait Circ2d {
     fn new_with_sense(x_axis: NAx2d, radius: f64, is_right_handed: bool) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn set_location(&mut self, location: NPnt2d);
+    fn set_location(&mut self, location: NPoint2d);
     fn set_x_axis(&mut self, axis: NAx2d);
     fn set_y_axis(&mut self, axis: NAx2d);
     fn set_axis(&mut self, axis: NAx22d);
@@ -21,10 +21,10 @@ pub trait Circ2d {
     fn area(&self) -> f64;
     fn length(&self) -> f64;
     fn coefficients(&self) -> (f64, f64, f64, f64, f64, f64);
-    fn contains(&self, point: &NPnt2d, linear_tolerance: f64) -> bool;
-    fn distance(&self, point: &NPnt2d) -> f64;
-    fn square_distance(&self, point: &NPnt2d) -> f64;
-    fn location(&self) -> &NPnt2d;
+    fn contains(&self, point: &NPoint2d, linear_tolerance: f64) -> bool;
+    fn distance(&self, point: &NPoint2d) -> f64;
+    fn square_distance(&self, point: &NPoint2d) -> f64;
+    fn location(&self) -> &NPoint2d;
     fn radius(&self) -> f64;
     fn axis(&self) -> &NAx22d;
     fn position(&self) -> &NAx22d;
@@ -33,20 +33,20 @@ pub trait Circ2d {
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, point: &NPnt2d);
-    fn mirrored_pnt(&self, point: &NPnt2d) -> Self;
+    fn mirror_pnt(&mut self, point: &NPoint2d);
+    fn mirrored_pnt(&self, point: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, axis: &NAx2d);
     fn mirrored_ax2d(&self, axis: &NAx2d) -> Self;
-    fn rotate(&mut self, point: &NPnt2d, angle: f64);
-    fn rotated(&self, point: &NPnt2d, angle: f64) -> Self;
-    fn scale(&mut self, point: &NPnt2d, factor: f64);
-    fn scaled(&self, point: &NPnt2d, factor: f64) -> Self;
+    fn rotate(&mut self, point: &NPoint2d, angle: f64);
+    fn rotated(&self, point: &NPoint2d, angle: f64) -> Self;
+    fn scale(&mut self, point: &NPoint2d, factor: f64);
+    fn scaled(&self, point: &NPoint2d, factor: f64) -> Self;
     fn transform(&mut self, transformation: &NTrsf2d);
     fn transformed(&self, transformation: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, vector: &NVec2d);
     fn translated_vec(&self, vector: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, from: &NPnt2d, to: &NPnt2d);
-    fn translated_pnts(&self, from: &NPnt2d, to: &NPnt2d) -> Self;
+    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d);
+    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self;
 }
 
 // Struct representing a circle in 2D space
@@ -72,7 +72,7 @@ impl Circ2d for NCirc2d {
         Ok(NCirc2d { pos, radius })
     }
 
-    fn set_location(&mut self, location: NPnt2d) {
+    fn set_location(&mut self, location: NPoint2d) {
         self.pos.set_location(location);
     }
 
@@ -117,23 +117,23 @@ impl Circ2d for NCirc2d {
         )
     }
 
-    fn contains(&self, point: &NPnt2d, linear_tolerance: f64) -> bool {
+    fn contains(&self, point: &NPoint2d, linear_tolerance: f64) -> bool {
         self.distance(point) <= linear_tolerance
     }
 
-    fn distance(&self, point: &NPnt2d) -> f64 {
+    fn distance(&self, point: &NPoint2d) -> f64 {
         let v = NVec2d::new_from_points(self.location(), point);
         let d = self.radius - v.magnitude();
         d.abs()
     }
 
-    fn square_distance(&self, point: &NPnt2d) -> f64 {
+    fn square_distance(&self, point: &NPoint2d) -> f64 {
         let v = NVec2d::new_from_points(self.location(), point);
         let d = self.radius - v.magnitude();
         d * d
     }
 
-    fn location(&self) -> &NPnt2d {
+    fn location(&self) -> &NPoint2d {
         self.pos.location()
     }
 
@@ -180,11 +180,11 @@ impl Circ2d for NCirc2d {
         self.pos.x_direction().crossed(self.pos.y_direction()) >= 0.0
     }
 
-    fn mirror_pnt(&mut self, point: &NPnt2d) {
+    fn mirror_pnt(&mut self, point: &NPoint2d) {
         self.pos.mirror_pnt(point);
     }
 
-    fn mirrored_pnt(&self, point: &NPnt2d) -> Self {
+    fn mirrored_pnt(&self, point: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.mirror_pnt(point);
         result
@@ -200,22 +200,22 @@ impl Circ2d for NCirc2d {
         result
     }
 
-    fn rotate(&mut self, point: &NPnt2d, angle: f64) {
+    fn rotate(&mut self, point: &NPoint2d, angle: f64) {
         self.pos.rotate(point, angle);
     }
 
-    fn rotated(&self, point: &NPnt2d, angle: f64) -> Self {
+    fn rotated(&self, point: &NPoint2d, angle: f64) -> Self {
         let mut result = self.clone();
         result.rotate(point, angle);
         result
     }
 
-    fn scale(&mut self, point: &NPnt2d, factor: f64) {
+    fn scale(&mut self, point: &NPoint2d, factor: f64) {
         self.radius *= factor.abs();
         self.pos.scale(point, factor);
     }
 
-    fn scaled(&self, point: &NPnt2d, factor: f64) -> Self {
+    fn scaled(&self, point: &NPoint2d, factor: f64) -> Self {
         let mut result = self.clone();
         result.scale(point, factor);
         result
@@ -242,11 +242,11 @@ impl Circ2d for NCirc2d {
         result
     }
 
-    fn translate_pnts(&mut self, from: &NPnt2d, to: &NPnt2d) {
+    fn translate_pnts(&mut self, from: &NPoint2d, to: &NPoint2d) {
         self.pos.translate_pnts(from, to);
     }
 
-    fn translated_pnts(&self, from: &NPnt2d, to: &NPnt2d) -> Self {
+    fn translated_pnts(&self, from: &NPoint2d, to: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.translate_pnts(from, to);
         result
@@ -261,7 +261,7 @@ mod tests {
     fn circ2d(pos: (f64, f64), x_dir: (f64, f64), y_dir: (f64, f64), radius: f64) -> NCirc2d {
         NCirc2d::new(
             NAx22d::new(
-                NPnt2d::new(pos.0, pos.1),
+                NPoint2d::new(pos.0, pos.1),
                 NDir2d::new(x_dir.0, x_dir.1).expect("Invalid X direction"),
                 NDir2d::new(y_dir.0, y_dir.1).expect("Invalid Y direction"),
             )
@@ -274,7 +274,7 @@ mod tests {
     #[test]
     fn test_new() {
         let pos = NAx22d::new(
-            NPnt2d::new(1.0, 2.0),
+            NPoint2d::new(1.0, 2.0),
             NDir2d::new(1.0, 0.0).unwrap(),
             NDir2d::new(0.0, 1.0).unwrap(),
         )
@@ -289,9 +289,9 @@ mod tests {
 
     #[test]
     fn test_new_with_sense() {
-        let x_axis = NAx2d::new(NPnt2d::new(1.0, 2.0), NDir2d::new(1.0, 0.0).unwrap());
+        let x_axis = NAx2d::new(NPoint2d::new(1.0, 2.0), NDir2d::new(1.0, 0.0).unwrap());
         let circ = NCirc2d::new_with_sense(x_axis.clone(), 5.0, true).unwrap();
-        assert_eq!(circ.location(), &NPnt2d::new(1.0, 2.0));
+        assert_eq!(circ.location(), &NPoint2d::new(1.0, 2.0));
         assert_eq!(circ.x_axis().direction(), &NDir2d::new(1.0, 0.0).unwrap());
         assert_eq!(circ.y_axis().direction(), &NDir2d::new(0.0, 1.0).unwrap());
         assert_eq!(circ.radius(), 5.0);
@@ -306,19 +306,19 @@ mod tests {
     #[test]
     fn test_setters() {
         let mut circ = circ2d((0.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        circ.set_location(NPnt2d::new(1.0, 2.0));
-        assert_eq!(circ.location(), &NPnt2d::new(1.0, 2.0));
+        circ.set_location(NPoint2d::new(1.0, 2.0));
+        assert_eq!(circ.location(), &NPoint2d::new(1.0, 2.0));
 
-        let new_x_axis = NAx2d::new(NPnt2d::new(3.0, 4.0), NDir2d::new(0.0, 1.0).unwrap());
+        let new_x_axis = NAx2d::new(NPoint2d::new(3.0, 4.0), NDir2d::new(0.0, 1.0).unwrap());
         circ.set_x_axis(new_x_axis.clone());
         assert_eq!(circ.x_axis(), new_x_axis);
 
-        let new_y_axis = NAx2d::new(NPnt2d::new(3.0, 4.0), NDir2d::new(1.0, 0.0).unwrap());
+        let new_y_axis = NAx2d::new(NPoint2d::new(3.0, 4.0), NDir2d::new(1.0, 0.0).unwrap());
         circ.set_y_axis(new_y_axis.clone());
         assert_eq!(circ.y_axis(), new_y_axis);
 
         let new_axis = NAx22d::new(
-            NPnt2d::new(5.0, 6.0),
+            NPoint2d::new(5.0, 6.0),
             NDir2d::new(1.0, 0.0).unwrap(),
             NDir2d::new(0.0, 1.0).unwrap(),
         )
@@ -354,12 +354,12 @@ mod tests {
     #[test]
     fn test_distance() {
         let circ = circ2d((0.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let p = NPnt2d::new(3.0, 4.0); // Point on circle (5^2 = 3^2 + 4^2)
+        let p = NPoint2d::new(3.0, 4.0); // Point on circle (5^2 = 3^2 + 4^2)
         assert!(circ.distance(&p).abs() < 1e-10);
         assert!(circ.square_distance(&p).abs() < 1e-10);
         assert!(circ.contains(&p, 1e-5));
 
-        let p2 = NPnt2d::new(10.0, 0.0); // Point outside circle
+        let p2 = NPoint2d::new(10.0, 0.0); // Point outside circle
         assert!((circ.distance(&p2) - 5.0).abs() < 1e-10);
         assert!((circ.square_distance(&p2) - 25.0).abs() < 1e-10);
         assert!(!circ.contains(&p2, 1e-5));
@@ -378,18 +378,18 @@ mod tests {
     #[test]
     fn test_mirror_pnt() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         circ.mirror_pnt(&point);
-        assert_eq!(circ.location(), &NPnt2d::new(-1.0, 0.0));
+        assert_eq!(circ.location(), &NPoint2d::new(-1.0, 0.0));
         assert_eq!(circ.radius(), 5.0);
     }
 
     #[test]
     fn test_mirror_ax2d() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let axis = NAx2d::new(NPnt2d::new(0.0, 0.0), NDir2d::new(0.0, 1.0).unwrap());
+        let axis = NAx2d::new(NPoint2d::new(0.0, 0.0), NDir2d::new(0.0, 1.0).unwrap());
         circ.mirror_ax2d(&axis);
-        assert_eq!(circ.location(), &NPnt2d::new(1.0, 0.0));
+        assert_eq!(circ.location(), &NPoint2d::new(1.0, 0.0));
         assert_eq!(circ.x_axis().direction(), &NDir2d::new(-1.0, 0.0).unwrap());
         assert_eq!(circ.radius(), 5.0);
     }
@@ -397,7 +397,7 @@ mod tests {
     #[test]
     fn test_rotate() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         circ.rotate(&point, PI / 2.0);
         assert!((circ.location().x() - 0.0).abs() < 1e-5);
         assert!((circ.location().y() - 1.0).abs() < 1e-5);
@@ -407,13 +407,13 @@ mod tests {
     #[test]
     fn test_scale() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let point = NPnt2d::new(0.0, 0.0);
+        let point = NPoint2d::new(0.0, 0.0);
         circ.scale(&point, 2.0);
-        assert_eq!(circ.location(), &NPnt2d::new(2.0, 0.0));
+        assert_eq!(circ.location(), &NPoint2d::new(2.0, 0.0));
         assert_eq!(circ.radius(), 10.0);
 
         circ.scale(&point, -2.0);
-        assert_eq!(circ.location(), &NPnt2d::new(-4.0, 0.0));
+        assert_eq!(circ.location(), &NPoint2d::new(-4.0, 0.0));
         assert_eq!(circ.radius(), 20.0);
         assert_eq!(circ.x_axis().direction(), &NDir2d::new(-1.0, 0.0).unwrap());
     }
@@ -421,9 +421,9 @@ mod tests {
     #[test]
     fn test_transform() {
         let mut circ = circ2d((1.0, 0.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let trsf = NTrsf2d::new_scale(&NPnt2d::new(0.0, 0.0), 2.0).unwrap();
+        let trsf = NTrsf2d::new_scale(&NPoint2d::new(0.0, 0.0), 2.0).unwrap();
         circ.transform(&trsf);
-        assert_eq!(circ.location(), &NPnt2d::new(2.0, 0.0));
+        assert_eq!(circ.location(), &NPoint2d::new(2.0, 0.0));
         assert_eq!(circ.radius(), 10.0);
     }
 
@@ -432,17 +432,17 @@ mod tests {
         let mut circ = circ2d((1.0, 2.0), (1.0, 0.0), (0.0, 1.0), 5.0);
         let vec = NVec2d::new(1.0, 1.0);
         circ.translate_vec(&vec);
-        assert_eq!(circ.location(), &NPnt2d::new(2.0, 3.0));
+        assert_eq!(circ.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(circ.radius(), 5.0);
     }
 
     #[test]
     fn test_translate_pnts() {
         let mut circ = circ2d((1.0, 2.0), (1.0, 0.0), (0.0, 1.0), 5.0);
-        let p1 = NPnt2d::new(0.0, 0.0);
-        let p2 = NPnt2d::new(1.0, 1.0);
+        let p1 = NPoint2d::new(0.0, 0.0);
+        let p2 = NPoint2d::new(1.0, 1.0);
         circ.translate_pnts(&p1, &p2);
-        assert_eq!(circ.location(), &NPnt2d::new(2.0, 3.0));
+        assert_eq!(circ.location(), &NPoint2d::new(2.0, 3.0));
         assert_eq!(circ.radius(), 5.0);
     }
 }

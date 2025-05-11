@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     nature_errors::NErrors,
-    nature_gp::{NAx2d, NAx22d, NDir2d, NGP, NPnt2d, NTrsf2d, NVec2d, NXY},
+    nature_gp::{NAx2d, NAx22d, NDir2d, NGP, NPoint2d, NTrsf2d, NVec2d, NXY},
 };
 
 // Trait to define the behavior of a hyperbola branch in 2D space
@@ -21,7 +21,7 @@ pub trait Hypr2d {
     fn new_with_axis(a: &NAx22d, major_radius: f64, minor_radius: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn set_location(&mut self, p: &NPnt2d);
+    fn set_location(&mut self, p: &NPoint2d);
     fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NErrors>;
     fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NErrors>;
     fn set_axis(&mut self, a: &NAx22d);
@@ -40,9 +40,9 @@ pub trait Hypr2d {
     fn directrix2(&self) -> NAx2d;
     fn eccentricity(&self) -> Result<f64, NErrors>;
     fn focal(&self) -> f64;
-    fn focus1(&self) -> NPnt2d;
-    fn focus2(&self) -> NPnt2d;
-    fn location(&self) -> &NPnt2d;
+    fn focus1(&self) -> NPoint2d;
+    fn focus2(&self) -> NPoint2d;
+    fn location(&self) -> &NPoint2d;
     fn major_radius(&self) -> f64;
     fn minor_radius(&self) -> f64;
     fn other_branch(&self) -> Self
@@ -57,20 +57,20 @@ pub trait Hypr2d {
     where
         Self: Sized;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, p: &NPnt2d);
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self
+    fn mirror_pnt(&mut self, p: &NPoint2d);
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self
     where
         Self: Sized;
     fn mirror_ax2d(&mut self, a: &NAx2d);
     fn mirrored_ax2d(&self, a: &NAx2d) -> Self
     where
         Self: Sized;
-    fn rotate(&mut self, p: &NPnt2d, ang: f64);
-    fn rotated(&self, p: &NPnt2d, ang: f64) -> Self
+    fn rotate(&mut self, p: &NPoint2d, ang: f64);
+    fn rotated(&self, p: &NPoint2d, ang: f64) -> Self
     where
         Self: Sized;
-    fn scale(&mut self, p: &NPnt2d, s: f64);
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self
+    fn scale(&mut self, p: &NPoint2d, s: f64);
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self
     where
         Self: Sized;
     fn transform(&mut self, t: &NTrsf2d);
@@ -81,8 +81,8 @@ pub trait Hypr2d {
     fn translated_vec(&self, v: &NVec2d) -> Self
     where
         Self: Sized;
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d);
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self
     where
         Self: Sized;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
@@ -101,7 +101,7 @@ impl Hypr2d for NHypr2d {
     fn new() -> Self {
         NHypr2d {
             pos: NAx22d::new(
-                &NPnt2d::new(0.0, 0.0),
+                &NPoint2d::new(0.0, 0.0),
                 &NDir2d::new(1.0, 0.0).unwrap(),
                 &NDir2d::new(0.0, 1.0).unwrap(),
             )
@@ -141,7 +141,7 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Sets the location (center) of the hyperbola.
-    fn set_location(&mut self, p: &NPnt2d) {
+    fn set_location(&mut self, p: &NPoint2d) {
         self.pos.set_location(p);
     }
 
@@ -270,7 +270,7 @@ impl Hypr2d for NHypr2d {
         let mut orig = self.pos.x_direction().xy();
         orig.multiply(self.major_radius / e);
         orig.add(&self.pos.location().xy());
-        NAx2d::new(&NPnt2d::from_xy(&orig), &self.pos.y_direction())
+        NAx2d::new(&NPoint2d::from_xy(&orig), &self.pos.y_direction())
     }
 
     /// Returns the second directrix (negative side of X-axis).
@@ -279,7 +279,7 @@ impl Hypr2d for NHypr2d {
         let mut orig = self.pos.x_direction().xy();
         orig.multiply(self.parameter().unwrap() / e);
         orig.add(&self.focus1().xy());
-        NAx2d::new(&NPnt2d::from_xy(&orig), &self.pos.y_direction())
+        NAx2d::new(&NPoint2d::from_xy(&orig), &self.pos.y_direction())
     }
 
     /// Returns the eccentricity of the hyperbola (e > 1).
@@ -299,27 +299,27 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Returns the first focus (positive X-axis side).
-    fn focus1(&self) -> NPnt2d {
+    fn focus1(&self) -> NPoint2d {
         let c =
             (self.major_radius * self.major_radius + self.minor_radius * self.minor_radius).sqrt();
-        NPnt2d::new(
+        NPoint2d::new(
             self.pos.location().x() + c * self.pos.x_direction().x(),
             self.pos.location().y() + c * self.pos.x_direction().y(),
         )
     }
 
     /// Returns the second focus (negative X-axis side).
-    fn focus2(&self) -> NPnt2d {
+    fn focus2(&self) -> NPoint2d {
         let c =
             (self.major_radius * self.major_radius + self.minor_radius * self.minor_radius).sqrt();
-        NPnt2d::new(
+        NPoint2d::new(
             self.pos.location().x() - c * self.pos.x_direction().x(),
             self.pos.location().y() - c * self.pos.x_direction().y(),
         )
     }
 
     /// Returns the location (center) of the hyperbola.
-    fn location(&self) -> &NPnt2d {
+    fn location(&self) -> &NPoint2d {
         self.pos.location()
     }
 
@@ -392,12 +392,12 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Mirrors the hyperbola about a point.
-    fn mirror_pnt(&mut self, p: &NPnt2d) {
+    fn mirror_pnt(&mut self, p: &NPoint2d) {
         self.pos.mirror_pnt(p);
     }
 
     /// Returns a hyperbola mirrored about a point.
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self {
         let mut h = self.clone();
         h.mirror_pnt(p);
         h
@@ -416,19 +416,19 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Rotates the hyperbola about a point.
-    fn rotate(&mut self, p: &NPnt2d, ang: f64) {
+    fn rotate(&mut self, p: &NPoint2d, ang: f64) {
         self.pos.rotate(p, ang);
     }
 
     /// Returns a rotated hyperbola.
-    fn rotated(&self, p: &NPnt2d, ang: f64) -> Self {
+    fn rotated(&self, p: &NPoint2d, ang: f64) -> Self {
         let mut h = self.clone();
         h.rotate(p, ang);
         h
     }
 
     /// Scales the hyperbola about a point.
-    fn scale(&mut self, p: &NPnt2d, s: f64) {
+    fn scale(&mut self, p: &NPoint2d, s: f64) {
         self.major_radius *= s;
         if self.major_radius < 0.0 {
             self.major_radius = -self.major_radius;
@@ -441,7 +441,7 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Returns a scaled hyperbola.
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self {
         let mut h = self.clone();
         h.scale(p, s);
         h
@@ -481,12 +481,12 @@ impl Hypr2d for NHypr2d {
     }
 
     /// Translates the hyperbola from one point to another.
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d) {
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
         self.pos.translate_pnts(p1, p2);
     }
 
     /// Returns a translated hyperbola from one point to another.
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self {
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut h = self.clone();
         h.translate_pnts(p1, p2);
         h
@@ -514,7 +514,7 @@ mod tests {
 
     fn hypr2d() -> NHypr2d {
         NHypr2d::new_with_major_axis(
-            &NAx2d::new(&NPnt2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
+            &NAx2d::new(&NPoint2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
             2.0,
             1.0,
             true,
@@ -536,7 +536,7 @@ mod tests {
         assert_eq!(h.minor_radius(), 1.0);
         assert!(matches!(
             NHypr2d::new_with_major_axis(
-                &NAx2d::new(&NPnt2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
+                &NAx2d::new(&NPoint2d::new(0.0, 0.0), &NDir2d::new(1.0, 0.0).unwrap()),
                 -1.0,
                 1.0,
                 true
@@ -552,7 +552,7 @@ mod tests {
         assert_eq!(h.major_radius(), 3.0);
         h.set_minor_radius(2.0).unwrap();
         assert_eq!(h.minor_radius(), 2.0);
-        let p = NPnt2d::new(1.0, 2.0);
+        let p = NPoint2d::new(1.0, 2.0);
         h.set_location(&p);
         assert_eq!(h.location(), &p);
     }
@@ -589,8 +589,8 @@ mod tests {
         let h = hypr2d();
         let f1 = h.focus1();
         let f2 = h.focus2();
-        assert!(f1.distance(&NPnt2d::new(5.0f64.sqrt(), 0.0)) < 1e-9);
-        assert!(f2.distance(&NPnt2d::new(-5.0f64.sqrt(), 0.0)) < 1e-9);
+        assert!(f1.distance(&NPoint2d::new(5.0f64.sqrt(), 0.0)) < 1e-9);
+        assert!(f2.distance(&NPoint2d::new(-5.0f64.sqrt(), 0.0)) < 1e-9);
     }
 
     #[test]
@@ -606,12 +606,12 @@ mod tests {
         let d2 = h.directrix2();
         assert!(
             d1.location()
-                .distance(&NPnt2d::new(4.0 / 5.0f64.sqrt(), 0.0))
+                .distance(&NPoint2d::new(4.0 / 5.0f64.sqrt(), 0.0))
                 < 1e-9
         );
         assert!(
             d2.location()
-                .distance(&NPnt2d::new(5.0f64.sqrt() - 0.5, 0.0))
+                .distance(&NPoint2d::new(5.0f64.sqrt() - 0.5, 0.0))
                 < 1e-9
         );
     }
@@ -619,12 +619,12 @@ mod tests {
     #[test]
     fn test_transformations() {
         let h = hypr2d();
-        let mut h_scaled = h.scaled(&NPnt2d::new(0.0, 0.0), 2.0);
+        let mut h_scaled = h.scaled(&NPoint2d::new(0.0, 0.0), 2.0);
         assert_eq!(h_scaled.major_radius(), 4.0);
         assert_eq!(h_scaled.minor_radius(), 2.0);
 
-        let mut h_mirrored = h.mirrored_pnt(&NPnt2d::new(1.0, 0.0));
-        assert!(h_mirrored.location().distance(&NPnt2d::new(2.0, 0.0)) < 1e-9);
+        let mut h_mirrored = h.mirrored_pnt(&NPoint2d::new(1.0, 0.0));
+        assert!(h_mirrored.location().distance(&NPoint2d::new(2.0, 0.0)) < 1e-9);
     }
 
     #[test]

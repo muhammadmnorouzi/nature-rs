@@ -1,14 +1,9 @@
 use std::io::Write;
 
 use serde::{Deserialize, Serialize};
+use crate::nature_errors::NErrors;
 
-use crate::gp::{NAx1, NAx2, NDir, NPnt, NTrsf, NXYZ, NatureError};
-
-mod gp {
-    pub fn resolution() -> f64 {
-        1e-12 // Consistent with trsf.rs
-    }
-}
+use super::prelude::*;
 
 /// Represents a non-persistent 3D vector.
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
@@ -39,19 +34,19 @@ impl NVec {
     }
 
     /// Creates a vector from two points (P2 - P1).
-    pub fn new_from_points(p1: &NPnt, p2: &NPnt) -> Self {
+    pub fn new_from_points(p1: &NPoint3d, p2: &NPoint3d) -> Self {
         NVec {
             coord: p2.xyz().subtracted(&p1.xyz()),
         }
     }
 
     /// Sets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NatureError> {
+    pub fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors> {
         match index {
             1 => self.coord.set_x(value),
             2 => self.coord.set_y(value),
             3 => self.coord.set_z(value),
-            _ => return Err(NatureError::OutOfRange),
+            _ => return Err(NErrors::OutOfRange),
         }
         Ok(())
     }
@@ -82,12 +77,12 @@ impl NVec {
     }
 
     /// Gets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn coord(&self, index: i32) -> Result<f64, NatureError> {
+    pub fn coord(&self, index: i32) -> Result<f64, NErrors> {
         match index {
             1 => Ok(self.coord.x()),
             2 => Ok(self.coord.y()),
             3 => Ok(self.coord.z()),
-            _ => Err(NatureError::OutOfRange),
+            _ => Err(NErrors::OutOfRange),
         }
     }
 
@@ -127,39 +122,39 @@ impl NVec {
     }
 
     /// Checks if the vector is normal to another within angular tolerance.
-    pub fn is_normal(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NatureError> {
+    pub fn is_normal(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = (std::f64::consts::PI / 2.0 - self.angle(other)?).abs();
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is opposite to another within angular tolerance.
-    pub fn is_opposite(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NatureError> {
+    pub fn is_opposite(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = std::f64::consts::PI - self.angle(other)?;
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is parallel to another within angular tolerance.
-    pub fn is_parallel(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NatureError> {
+    pub fn is_parallel(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = self.angle(other)?;
         Ok(angle <= angular_tolerance || (std::f64::consts::PI - angle) <= angular_tolerance)
     }
 
     /// Computes the angle between two vectors (0 to PI radians).
-    pub fn angle(&self, other: &NVec) -> Result<f64, NatureError> {
+    pub fn angle(&self, other: &NVec) -> Result<f64, NErrors> {
         if self.magnitude() <= gp::resolution() || other.magnitude() <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let dir = NDir::new_from_xyz(&self.coord)?;
         dir.angle(&NDir::new_from_xyz(&other.coord))
     }
 
     /// Computes the signed angle between two vectors with respect to a reference vector (-PI to PI radians).
-    pub fn angle_with_ref(&self, other: &NVec, v_ref: &NVec) -> Result<f64, NatureError> {
+    pub fn angle_with_ref(&self, other: &NVec, v_ref: &NVec) -> Result<f64, NErrors> {
         if self.magnitude() <= gp::resolution()
             || other.magnitude() <= gp::resolution()
             || v_ref.magnitude() <= gp::resolution()
         {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let dir = NDir::new_from_xyz(&self.coord)?;
         let other_dir = NDir::new_from_xyz(&other.coord)?;
@@ -213,18 +208,18 @@ impl NVec {
     }
 
     /// Divides the vector by a scalar.
-    pub fn divide(&mut self, scalar: f64) -> Result<(), NatureError> {
+    pub fn divide(&mut self, scalar: f64) -> Result<(), NErrors> {
         if scalar.abs() <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.coord.divide(scalar);
         Ok(())
     }
 
     /// Returns the vector divided by a scalar.
-    pub fn divided(&self, scalar: f64) -> Result<NVec, NatureError> {
+    pub fn divided(&self, scalar: f64) -> Result<NVec, NErrors> {
         if scalar.abs() <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         Ok(NVec {
             coord: self.coord.divided(scalar),
@@ -276,20 +271,20 @@ impl NVec {
     }
 
     /// Normalizes the vector.
-    pub fn normalize(&mut self) -> Result<(), NatureError> {
+    pub fn normalize(&mut self) -> Result<(), NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         self.coord.divide(mag);
         Ok(())
     }
 
     /// Returns a normalized copy of the vector.
-    pub fn normalized(&self) -> Result<NVec, NatureError> {
+    pub fn normalized(&self) -> Result<NVec, NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         Ok(NVec {
             coord: self.coord.divided(mag),
@@ -339,10 +334,10 @@ impl NVec {
     }
 
     /// Mirrors the vector with respect to another vector.
-    pub fn mirror_vec(&mut self, v: &NVec) -> Result<(), NatureError> {
+    pub fn mirror_vec(&mut self, v: &NVec) -> Result<(), NErrors> {
         let d = v.magnitude();
         if d <= gp::resolution() {
-            return Err(NatureError::VectorWithNullMagnitude);
+            return Err(NErrors::VectorWithNullMagnitude);
         }
         let xyz = &v.coord;
         let a = xyz.x() / d;
@@ -363,7 +358,7 @@ impl NVec {
     }
 
     /// Returns a mirrored copy with respect to another vector.
-    pub fn mirrored_vec(&self, v: &NVec) -> Result<NVec, NatureError> {
+    pub fn mirrored_vec(&self, v: &NVec) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.mirror_vec(v)?;
         Ok(result)
@@ -396,7 +391,7 @@ impl NVec {
     }
 
     /// Mirrors the vector with respect to a plane.
-    pub fn mirror_ax2(&mut self, a2: &NAx2) -> Result<(), NatureError> {
+    pub fn mirror_ax2(&mut self, a2: &NAx2) -> Result<(), NErrors> {
         let z = a2.direction().xyz();
         let mut mir_xyz = z.crossed(&self.coord);
         if mir_xyz.modulus() <= gp::resolution() {
@@ -409,14 +404,14 @@ impl NVec {
     }
 
     /// Returns a mirrored copy with respect to a plane.
-    pub fn mirrored_ax2(&self, a2: &NAx2) -> Result<NVec, NatureError> {
+    pub fn mirrored_ax2(&self, a2: &NAx2) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.mirror_ax2(a2)?;
         Ok(result)
     }
 
     /// Rotates the vector around an axis by an angle.
-    pub fn rotate(&mut self, a1: &NAx1, ang: f64) -> Result<(), NatureError> {
+    pub fn rotate(&mut self, a1: &NAx1, ang: f64) -> Result<(), NErrors> {
         let mut t = NTrsf::new();
         t.set_rotation(a1, ang)?;
         self.coord.multiply(&t.vectorial_part());
@@ -424,7 +419,7 @@ impl NVec {
     }
 
     /// Returns a rotated copy of the vector.
-    pub fn rotated(&self, a1: &NAx1, ang: f64) -> Result<NVec, NatureError> {
+    pub fn rotated(&self, a1: &NAx1, ang: f64) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.rotate(a1, ang)?;
         Ok(result)
@@ -552,7 +547,7 @@ mod tests {
     fn test_transform() {
         let mut v = NVec::new_from_coords(1.0, 0.0, 0.0);
         let mut t = NTrsf::new();
-        t.set_scale(&NPnt::new(0.0, 0.0, 0.0), 2.0).unwrap();
+        t.set_scale(&NPoint3d::new(0.0, 0.0, 0.0), 2.0).unwrap();
         v.transform(&t);
         assert_eq!(v.coords(), (2.0, 0.0, 0.0));
     }

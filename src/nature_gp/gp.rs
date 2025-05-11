@@ -6,7 +6,7 @@ use super::{
     ax2d::{Ax2d, NAx2d},
     dir::{Dir, NDir},
     dir2d::{Dir2d, NDir2d},
-    point2d::{NPnt2d, Pnt2d},
+    point2d::{NPoint2d, Pnt2d},
     point3d::{NPoint3d, Point3d},
 };
 
@@ -50,7 +50,7 @@ pub trait GP {
     fn yoz() -> NAx2;
 
     /// Identifies a Cartesian point with coordinates X = Y = 0.0 in 2D.
-    fn origin2d() -> NPnt2d;
+    fn origin2d() -> NPoint2d;
 
     /// Returns a unit vector with the combinations (1,0) in 2D.
     fn dx2d() -> NDir2d;
@@ -116,8 +116,8 @@ impl GP for NGP {
         NAx2::new(NGP::origin(), NGP::dx(), NGP::dy()).unwrap()
     }
 
-    fn origin2d() -> NPnt2d {
-        NPnt2d::new_with_coords(0.0, 0.0)
+    fn origin2d() -> NPoint2d {
+        NPoint2d::new_with_coords(0.0, 0.0)
     }
 
     fn dx2d() -> NDir2d {
@@ -207,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_origin2d() {
-        assert_eq!(NGP::origin2d(), NPnt2d::new_with_coords(0.0, 0.0));
+        assert_eq!(NGP::origin2d(), NPoint2d::new_with_coords(0.0, 0.0));
     }
 
     #[test]

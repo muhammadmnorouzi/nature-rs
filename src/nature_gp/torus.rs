@@ -3,7 +3,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::{NAx1, NAx2, NAx3, NPnt, NTrsf, NVec, NatureError};
+use crate::gp::{NAx1, NAx2, NAx3, NPoint3d, NTrsf, NVec, NErrors};
 
 // Assuming gp::resolution and constants are defined elsewhere
 mod gp {
@@ -21,43 +21,43 @@ mod gp {
 // Trait to define the behavior of a torus
 pub trait Torus {
     fn new() -> Self;
-    fn new_with_params(a3: NAx3, major_radius: f64, minor_radius: f64) -> Result<Self, NatureError>
+    fn new_with_params(a3: NAx3, major_radius: f64, minor_radius: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn set_axis(&mut self, a1: NAx1) -> Result<(), NatureError>;
-    fn set_location(&mut self, loc: NPnt);
-    fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NatureError>;
-    fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NatureError>;
+    fn set_axis(&mut self, a1: NAx1) -> Result<(), NErrors>;
+    fn set_location(&mut self, loc: NPoint3d);
+    fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NErrors>;
+    fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NErrors>;
     fn set_position(&mut self, a3: NAx3);
     fn area(&self) -> f64;
     fn u_reverse(&mut self);
     fn v_reverse(&mut self);
     fn direct(&self) -> bool;
     fn axis(&self) -> NAx1;
-    fn coefficients(&self, coef: &mut [f64]) -> Result<(), NatureError>;
-    fn location(&self) -> NPnt;
+    fn coefficients(&self, coef: &mut [f64]) -> Result<(), NErrors>;
+    fn location(&self) -> NPoint3d;
     fn position(&self) -> NAx3;
     fn major_radius(&self) -> f64;
     fn minor_radius(&self) -> f64;
     fn volume(&self) -> f64;
     fn x_axis(&self) -> NAx1;
     fn y_axis(&self) -> NAx1;
-    fn mirror_pnt(&mut self, p: NPnt);
-    fn mirrored_pnt(&self, p: NPnt) -> Self;
+    fn mirror_pnt(&mut self, p: NPoint3d);
+    fn mirrored_pnt(&self, p: NPoint3d) -> Self;
     fn mirror_ax1(&mut self, a1: NAx1);
     fn mirrored_ax1(&self, a1: NAx1) -> Self;
     fn mirror_ax2(&mut self, a2: NAx2);
     fn mirrored_ax2(&self, a2: NAx2) -> Self;
     fn rotate(&mut self, a1: NAx1, ang: f64);
     fn rotated(&self, a1: NAx1, ang: f64) -> Self;
-    fn scale(&mut self, p: NPnt, s: f64);
-    fn scaled(&self, p: NPnt, s: f64) -> Self;
+    fn scale(&mut self, p: NPoint3d, s: f64);
+    fn scaled(&self, p: NPoint3d, s: f64) -> Self;
     fn transform(&mut self, t: NTrsf);
     fn transformed(&self, t: NTrsf) -> Self;
     fn translate_vec(&mut self, v: NVec);
     fn translated_vec(&self, v: NVec) -> Self;
-    fn translate_pnts(&mut self, p1: NPnt, p2: NPnt);
-    fn translated_pnts(&self, p1: NPnt, p2: NPnt) -> Self;
+    fn translate_pnts(&mut self, p1: NPoint3d, p2: NPoint3d);
+    fn translated_pnts(&self, p1: NPoint3d, p2: NPoint3d) -> Self;
     fn dump_json(&self, out: &mut dyn Write, depth: i32);
 }
 
@@ -73,16 +73,16 @@ impl Torus for NTorus {
     /// Creates an indefinite torus.
     fn new() -> Self {
         NTorus {
-            pos: NAx3::new(NPnt::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
+            pos: NAx3::new(NPoint3d::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
             major_radius: gp::real_last(),
             minor_radius: gp::real_small(),
         }
     }
 
     /// Creates a torus with the given position and radii.
-    fn new_with_params(a3: NAx3, major_radius: f64, minor_radius: f64) -> Result<Self, NatureError> {
+    fn new_with_params(a3: NAx3, major_radius: f64, minor_radius: f64) -> Result<Self, NErrors> {
         if minor_radius < 0.0 || major_radius < 0.0 {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         Ok(NTorus {
             pos: a3,
@@ -92,7 +92,7 @@ impl Torus for NTorus {
     }
 
     /// Sets the symmetry axis of the torus.
-    fn set_axis(&mut self, a1: NAx1) -> Result<(), NatureError> {
+    fn set_axis(&mut self, a1: NAx1) -> Result<(), NErrors> {
         // Note: C++ raises if a1's direction is parallel to XDirection.
         // Assuming NAx3::set_axis handles this validation.
         self.pos.set_axis(a1);
@@ -100,23 +100,23 @@ impl Torus for NTorus {
     }
 
     /// Sets the location of the torus.
-    fn set_location(&mut self, loc: NPnt) {
+    fn set_location(&mut self, loc: NPoint3d) {
         self.pos.set_location(loc);
     }
 
     /// Sets the major radius.
-    fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NatureError> {
+    fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NErrors> {
         if major_radius - self.minor_radius <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.major_radius = major_radius;
         Ok(())
     }
 
     /// Sets the minor radius.
-    fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NatureError> {
+    fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NErrors> {
         if minor_radius < 0.0 || self.major_radius - minor_radius <= gp::resolution() {
-            return Err(NatureError::InvalidConstructionParameters);
+            return Err(NErrors::InvalidConstructionParameters);
         }
         self.minor_radius = minor_radius;
         Ok(())
@@ -153,9 +153,9 @@ impl Torus for NTorus {
     }
 
     /// Computes the coefficients of the implicit equation.
-    fn coefficients(&self, coef: &mut [f64]) -> Result<(), NatureError> {
+    fn coefficients(&self, coef: &mut [f64]) -> Result<(), NErrors> {
         if coef.len() < 35 {
-            return Err(NatureError::DimensionMismatch);
+            return Err(NErrors::DimensionMismatch);
         }
 
         let mut tr = NTrsf::new();
@@ -238,7 +238,7 @@ impl Torus for NTorus {
     }
 
     /// Returns the torus's location.
-    fn location(&self) -> NPnt {
+    fn location(&self) -> NPoint3d {
         self.pos.location()
     }
 
@@ -273,12 +273,12 @@ impl Torus for NTorus {
     }
 
     /// Mirrors the torus with respect to a point.
-    fn mirror_pnt(&mut self, p: NPnt) {
+    fn mirror_pnt(&mut self, p: NPoint3d) {
         self.pos.mirror(p);
     }
 
     /// Returns a mirrored torus with respect to a point.
-    fn mirrored_pnt(&self, p: NPnt) -> Self {
+    fn mirrored_pnt(&self, p: NPoint3d) -> Self {
         let mut c = self.clone();
         c.pos.mirror(p);
         c
@@ -321,7 +321,7 @@ impl Torus for NTorus {
     }
 
     /// Scales the torus.
-    fn scale(&mut self, p: NPnt, s: f64) {
+    fn scale(&mut self, p: NPoint3d, s: f64) {
         self.pos.scale(p, s);
         let scale = s.abs();
         self.major_radius *= scale;
@@ -329,7 +329,7 @@ impl Torus for NTorus {
     }
 
     /// Returns a scaled torus.
-    fn scaled(&self, p: NPnt, s: f64) -> Self {
+    fn scaled(&self, p: NPoint3d, s: f64) -> Self {
         let mut c = self.clone();
         c.pos.scale(p, s);
         c.major_radius *= s.abs();
@@ -367,12 +367,12 @@ impl Torus for NTorus {
     }
 
     /// Translates the torus from one point to another.
-    fn translate_pnts(&mut self, p1: NPnt, p2: NPnt) {
+    fn translate_pnts(&mut self, p1: NPoint3d, p2: NPoint3d) {
         self.pos.translate(p1, p2);
     }
 
     /// Returns a translated torus from one point to another.
-    fn translated_pnts(&self, p1: NPnt, p2: NPnt) -> Self {
+    fn translated_pnts(&self, p1: NPoint3d, p2: NPoint3d) -> Self {
         let mut c = self.clone();
         c.pos.translate(p1, p2);
         c
@@ -397,7 +397,7 @@ mod tests {
 
     fn create_test_torus() -> NTorus {
         NTorus::new_with_params(
-            NAx3::new(NPnt::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
+            NAx3::new(NPoint3d::new(0.0, 0.0, 0.0), NVec::new(0.0, 0.0, 1.0), NVec::new(1.0, 0.0, 0.0)),
             10.0,
             2.0,
         ).unwrap()
@@ -458,7 +458,7 @@ mod tests {
     #[test]
     fn test_mirror_pnt() {
         let mut t = create_test_torus();
-        let p = NPnt::new(1.0, 2.0, 3.0);
+        let p = NPoint3d::new(1.0, 2.0, 3.0);
         t.mirror_pnt(p);
         let mirrored = t.mirrored_pnt(p);
         assert_eq!(t.position(), mirrored.position());
@@ -467,7 +467,7 @@ mod tests {
     #[test]
     fn test_scale() {
         let mut t = create_test_torus();
-        t.scale(NPnt::new(0.0, 0.0, 0.0), 2.0);
+        t.scale(NPoint3d::new(0.0, 0.0, 0.0), 2.0);
         assert_eq!(t.major_radius(), 20.0);
         assert_eq!(t.minor_radius(), 4.0);
     }

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::nature_errors::NErrors;
 
-use crate::nature_gp::{NAx2d, NAx22d, NDir2d, NPnt2d, NTrsf2d, NVec2d};
+use crate::nature_gp::{NAx2d, NAx22d, NDir2d, NPoint2d, NTrsf2d, NVec2d};
 
 // Trait to define the behavior of an ellipse in 2D space
 pub trait Elips2d {
@@ -19,7 +19,7 @@ pub trait Elips2d {
     fn new_with_ax22d(a: &NAx22d, major_radius: f64, minor_radius: f64) -> Result<Self, NErrors>
     where
         Self: Sized;
-    fn set_location(&mut self, p: &NPnt2d);
+    fn set_location(&mut self, p: &NPoint2d);
     fn set_major_radius(&mut self, major_radius: f64) -> Result<(), NErrors>;
     fn set_minor_radius(&mut self, minor_radius: f64) -> Result<(), NErrors>;
     fn set_axis(&mut self, a: &NAx22d);
@@ -31,9 +31,9 @@ pub trait Elips2d {
     fn directrix2(&self) -> Result<NAx2d, NErrors>;
     fn eccentricity(&self) -> f64;
     fn focal(&self) -> f64;
-    fn focus1(&self) -> NPnt2d;
-    fn focus2(&self) -> NPnt2d;
-    fn location(&self) -> &NPnt2d;
+    fn focus1(&self) -> NPoint2d;
+    fn focus2(&self) -> NPoint2d;
+    fn location(&self) -> &NPoint2d;
     fn major_radius(&self) -> f64;
     fn minor_radius(&self) -> f64;
     fn parameter(&self) -> f64;
@@ -43,20 +43,20 @@ pub trait Elips2d {
     fn reverse(&mut self);
     fn reversed(&self) -> Self;
     fn is_direct(&self) -> bool;
-    fn mirror_pnt(&mut self, p: &NPnt2d);
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self;
+    fn mirror_pnt(&mut self, p: &NPoint2d);
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self;
     fn mirror_ax2d(&mut self, a: &NAx2d);
     fn mirrored_ax2d(&self, a: &NAx2d) -> Self;
-    fn rotate(&mut self, p: &NPnt2d, angle: f64);
-    fn rotated(&self, p: &NPnt2d, angle: f64) -> Self;
-    fn scale(&mut self, p: &NPnt2d, s: f64);
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self;
+    fn rotate(&mut self, p: &NPoint2d, angle: f64);
+    fn rotated(&self, p: &NPoint2d, angle: f64) -> Self;
+    fn scale(&mut self, p: &NPoint2d, s: f64);
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self;
     fn transform(&mut self, t: &NTrsf2d);
     fn transformed(&self, t: &NTrsf2d) -> Self;
     fn translate_vec(&mut self, v: &NVec2d);
     fn translated_vec(&self, v: &NVec2d) -> Self;
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d);
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self;
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d);
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self;
 }
 
 // Struct representing an ellipse in 2D space
@@ -95,7 +95,7 @@ impl Elips2d for NElips2d {
         })
     }
 
-    fn set_location(&mut self, p: &NPnt2d) {
+    fn set_location(&mut self, p: &NPoint2d) {
         self.pos.set_location(p);
     }
 
@@ -177,7 +177,7 @@ impl Elips2d for NElips2d {
             .multiplied(self.major_radius / e)
             .added(&self.pos.location().xy());
         Ok(NAx2d::new(
-            &NPnt2d::new_from_xy(&orig),
+            &NPoint2d::new_from_xy(&orig),
             &self.pos.y_direction(),
         ))
     }
@@ -194,7 +194,7 @@ impl Elips2d for NElips2d {
             .multiplied(-self.major_radius / e)
             .added(&self.pos.location().xy());
         Ok(NAx2d::new(
-            &NPnt2d::new_from_xy(&orig),
+            &NPoint2d::new_from_xy(&orig),
             &self.pos.y_direction(),
         ))
     }
@@ -212,23 +212,23 @@ impl Elips2d for NElips2d {
         2.0 * (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt()
     }
 
-    fn focus1(&self) -> NPnt2d {
+    fn focus1(&self) -> NPoint2d {
         let c =
             (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt();
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        NPnt2d::new(p.x() + c * d.x(), p.y() + c * d.y())
+        NPoint2d::new(p.x() + c * d.x(), p.y() + c * d.y())
     }
 
-    fn focus2(&self) -> NPnt2d {
+    fn focus2(&self) -> NPoint2d {
         let c =
             (self.major_radius * self.major_radius - self.minor_radius * self.minor_radius).sqrt();
         let p = self.pos.location();
         let d = self.pos.x_direction();
-        NPnt2d::new(p.x() - c * d.x(), p.y() - c * d.y())
+        NPoint2d::new(p.x() - c * d.x(), p.y() - c * d.y())
     }
 
-    fn location(&self) -> &NPnt2d {
+    fn location(&self) -> &NPoint2d {
         self.pos.location()
     }
 
@@ -279,11 +279,11 @@ impl Elips2d for NElips2d {
         self.pos.x_direction().crossed(&self.pos.y_direction()) >= 0.0
     }
 
-    fn mirror_pnt(&mut self, p: &NPnt2d) {
+    fn mirror_pnt(&mut self, p: &NPoint2d) {
         self.pos.mirror_pnt(p);
     }
 
-    fn mirrored_pnt(&self, p: &NPnt2d) -> Self {
+    fn mirrored_pnt(&self, p: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.mirror_pnt(p);
         result
@@ -299,23 +299,23 @@ impl Elips2d for NElips2d {
         result
     }
 
-    fn rotate(&mut self, p: &NPnt2d, angle: f64) {
+    fn rotate(&mut self, p: &NPoint2d, angle: f64) {
         self.pos.rotate(p, angle);
     }
 
-    fn rotated(&self, p: &NPnt2d, angle: f64) -> Self {
+    fn rotated(&self, p: &NPoint2d, angle: f64) -> Self {
         let mut result = self.clone();
         result.rotate(p, angle);
         result
     }
 
-    fn scale(&mut self, p: &NPnt2d, s: f64) {
+    fn scale(&mut self, p: &NPoint2d, s: f64) {
         self.major_radius *= s.abs();
         self.minor_radius *= s.abs();
         self.pos.scale(p, s);
     }
 
-    fn scaled(&self, p: &NPnt2d, s: f64) -> Self {
+    fn scaled(&self, p: &NPoint2d, s: f64) -> Self {
         let mut result = self.clone();
         result.scale(p, s);
         result
@@ -344,11 +344,11 @@ impl Elips2d for NElips2d {
         result
     }
 
-    fn translate_pnts(&mut self, p1: &NPnt2d, p2: &NPnt2d) {
+    fn translate_pnts(&mut self, p1: &NPoint2d, p2: &NPoint2d) {
         self.pos.translate_pnts(p1, p2);
     }
 
-    fn translated_pnts(&self, p1: &NPnt2d, p2: &NPnt2d) -> Self {
+    fn translated_pnts(&self, p1: &NPoint2d, p2: &NPoint2d) -> Self {
         let mut result = self.clone();
         result.translate_pnts(p1, p2);
         result
@@ -364,13 +364,13 @@ mod tests {
         NElips2d::new(major_axis, major, minor, is_sense).expect("Invalid ellipse")
     }
 
-    fn ax2d(p: &NPnt2d, d: &NDir2d) -> NAx2d {
+    fn ax2d(p: &NPoint2d, d: &NDir2d) -> NAx2d {
         NAx2d::new(p, d)
     }
 
     #[test]
     fn test_new() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = NElips2d::new(&axis, 5.0, 3.0, true).unwrap();
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_new_with_ax22d() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let x_dir = NDir2d::new(1.0, 0.0).unwrap();
         let y_dir = NDir2d::new(0.0, 1.0).unwrap();
         let ax22d = NAx22d::new(&p, &x_dir, &y_dir).unwrap();
@@ -402,7 +402,7 @@ mod tests {
 
     #[test]
     fn test_setters() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
@@ -425,18 +425,18 @@ mod tests {
             Err(NErrors::ConstructionError)
         ));
 
-        let new_p = NPnt2d::new(1.0, 1.0);
+        let new_p = NPoint2d::new(1.0, 1.0);
         elips.set_location(&new_p);
         assert_eq!(elips.location(), &new_p);
 
-        let new_axis = ax2d(&NPnt2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
+        let new_axis = ax2d(&NPoint2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
         elips.set_x_axis(&new_axis);
         assert_eq!(elips.x_axis(), new_axis);
     }
 
     #[test]
     fn test_area() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -445,7 +445,7 @@ mod tests {
 
     #[test]
     fn test_coefficients() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -464,7 +464,7 @@ mod tests {
 
     #[test]
     fn test_eccentricity() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn test_focal() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -487,7 +487,7 @@ mod tests {
 
     #[test]
     fn test_focus() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -502,7 +502,7 @@ mod tests {
 
     #[test]
     fn test_directrix() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -529,7 +529,7 @@ mod tests {
 
     #[test]
     fn test_parameter() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -541,21 +541,21 @@ mod tests {
 
     #[test]
     fn test_axes() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
         let x_axis = elips.x_axis();
         let y_axis = elips.y_axis();
-        assert_eq!(x_axis.location(), &NPnt2d::new(0.0, 0.0));
-        assert_eq!(y_axis.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(x_axis.location(), &NPoint2d::new(0.0, 0.0));
+        assert_eq!(y_axis.location(), &NPoint2d::new(0.0, 0.0));
         assert_eq!(x_axis.direction().coords(), (1.0, 0.0));
         assert_eq!(y_axis.direction().coords(), (0.0, 1.0));
     }
 
     #[test]
     fn test_reverse() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
@@ -569,7 +569,7 @@ mod tests {
 
     #[test]
     fn test_is_direct() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let elips = elips2d(&axis, 5.0, 3.0, true);
@@ -581,29 +581,29 @@ mod tests {
 
     #[test]
     fn test_mirror() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
-        let p_mirror = NPnt2d::new(1.0, 1.0);
+        let p_mirror = NPoint2d::new(1.0, 1.0);
         elips.mirror_pnt(&p_mirror);
-        assert_eq!(elips.location(), &NPnt2d::new(2.0, 2.0));
+        assert_eq!(elips.location(), &NPoint2d::new(2.0, 2.0));
 
         let mirrored = elips.mirrored_pnt(&p_mirror);
-        assert_eq!(mirrored.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(mirrored.location(), &NPoint2d::new(0.0, 0.0));
 
-        let ax_mirror = ax2d(&NPnt2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
+        let ax_mirror = ax2d(&NPoint2d::new(0.0, 0.0), &NDir2d::new(0.0, 1.0).unwrap());
         elips.mirror_ax2d(&ax_mirror);
-        assert_eq!(elips.location(), &NPnt2d::new(2.0, -2.0));
+        assert_eq!(elips.location(), &NPoint2d::new(2.0, -2.0));
     }
 
     #[test]
     fn test_rotate() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
-        let p_rot = NPnt2d::new(0.0, 0.0);
+        let p_rot = NPoint2d::new(0.0, 0.0);
         elips.rotate(&p_rot, PI / 2.0);
         let x_dir = elips.x_axis().direction();
         assert!((x_dir.x() - 0.0).abs() < 1e-10);
@@ -615,35 +615,35 @@ mod tests {
 
     #[test]
     fn test_scale() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
-        let p_scale = NPnt2d::new(1.0, 1.0);
+        let p_scale = NPoint2d::new(1.0, 1.0);
         elips.scale(&p_scale, -2.0);
         assert_eq!(elips.major_radius(), 10.0);
         assert_eq!(elips.minor_radius(), 6.0);
-        assert_eq!(elips.location(), &NPnt2d::new(3.0, 3.0));
+        assert_eq!(elips.location(), &NPoint2d::new(3.0, 3.0));
 
         let scaled = elips.scaled(&p_scale, 0.5);
         assert_eq!(scaled.major_radius(), 5.0);
         assert_eq!(scaled.minor_radius(), 3.0);
-        assert_eq!(scaled.location(), &NPnt2d::new(2.0, 2.0));
+        assert_eq!(scaled.location(), &NPoint2d::new(2.0, 2.0));
     }
 
     #[test]
     fn test_transform() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
-        let trsf = NTrsf2d::new_scale(&NPnt2d::new(0.0, 0.0), -2.0).unwrap();
+        let trsf = NTrsf2d::new_scale(&NPoint2d::new(0.0, 0.0), -2.0).unwrap();
         elips.transform(&trsf);
         assert_eq!(elips.major_radius(), 10.0);
         assert_eq!(elips.minor_radius(), 6.0);
-        assert_eq!(elips.location(), &NPnt2d::new(0.0, 0.0));
+        assert_eq!(elips.location(), &NPoint2d::new(0.0, 0.0));
 
-        let trsf = NTrsf2d::new_rotation(&NPnt2d::new(0.0, 0.0), PI / 2.0).unwrap();
+        let trsf = NTrsf2d::new_rotation(&NPoint2d::new(0.0, 0.0), PI / 2.0).unwrap();
         let transformed = elips.transformed(&trsf);
         let x_dir = transformed.x_axis().direction();
         assert!((x_dir.x() - 0.0).abs() < 1e-10);
@@ -652,17 +652,17 @@ mod tests {
 
     #[test]
     fn test_translate() {
-        let p = NPnt2d::new(0.0, 0.0);
+        let p = NPoint2d::new(0.0, 0.0);
         let d = NDir2d::new(1.0, 0.0).unwrap();
         let axis = ax2d(&p, &d);
         let mut elips = elips2d(&axis, 5.0, 3.0, true);
         let v = NVec2d::new(1.0, 2.0);
         elips.translate_vec(&v);
-        assert_eq!(elips.location(), &NPnt2d::new(1.0, 2.0));
+        assert_eq!(elips.location(), &NPoint2d::new(1.0, 2.0));
 
-        let p1 = NPnt2d::new(1.0, 1.0);
-        let p2 = NPnt2d::new(2.0, 3.0);
+        let p1 = NPoint2d::new(1.0, 1.0);
+        let p2 = NPoint2d::new(2.0, 3.0);
         let translated = elips.translated_pnts(&p1, &p2);
-        assert_eq!(translated.location(), &NPnt2d::new(2.0, 3.0));
+        assert_eq!(translated.location(), &NPoint2d::new(2.0, 3.0));
     }
 }
