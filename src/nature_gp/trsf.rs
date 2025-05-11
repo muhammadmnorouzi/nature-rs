@@ -1,8 +1,7 @@
 use std::io::Write;
 
 use serde::{Deserialize, Serialize};
-
-use crate::gp::{NAx1, NAx2, NAx3, NMat, NPoint3d, NQuaternion, NTrsf2d, NTrsfForm, NVec, NXYZ, NErrors};
+use super::prelude::*;
 
 mod gp {
     pub fn resolution() -> f64 {
@@ -190,8 +189,8 @@ impl Trsf for NTrsf {
 
     /// Sets the transformation to a scale.
     fn set_scale(&mut self, p: &NPoint3d, s: f64) -> Result<(), NErrors> {
-        let as = s.abs();
-        if as <= gp::resolution() {
+        let _as = s.abs();
+        if _as <= gp::resolution() {
             return Err(NErrors::InvalidConstructionParameters);
         }
         self.shape = NTrsfForm::Scale;

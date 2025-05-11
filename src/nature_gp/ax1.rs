@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
-
-use crate::nature_gp::{ax2::NAx2, dir::NDir, point3d::NPoint3d, trsf::NTrsf, vec::NVec};
+use super::prelude::*;
 
 // Trait to define the behavior of an axis in 3D space
 pub trait Ax1 {
@@ -135,7 +134,7 @@ impl Ax1 for NAx1 {
 
     fn mirror_ax1(&mut self, axis: &Self) {
         self.loc.mirror_ax1(axis);
-        self.vdir.mirror(&axis.vdir);
+        self.vdir.mirror_dir(&axis.vdir);
     }
 
     fn mirrored_ax1(&self, axis: &Self) -> Self {
@@ -201,7 +200,7 @@ impl Ax1 for NAx1 {
     }
 
     fn translate_pnts(&mut self, from: &NPoint3d, to: &NPoint3d) {
-        self.loc.translate_pnts(from, to);
+        self.loc.translate_point3d(from, to);
     }
 
     fn translated_pnts(&self, from: &NPoint3d, to: &NPoint3d) -> Self {
@@ -310,7 +309,7 @@ mod tests {
     #[test]
     fn test_translate_vec() {
         let mut ax = new_ax1(1.0, 2.0, 3.0, 0.0, 0.0, 1.0);
-        let vec = NVec::new(1.0, 1.0, 1.0);
+        let vec = NVec::new_from_coords(1.0, 1.0, 1.0);
         ax.translate_vec(&vec);
         assert_eq!(ax.location(), &NPoint3d::new(2.0, 3.0, 4.0));
         assert_eq!(ax.direction(), &NDir::new(0.0, 0.0, 1.0).unwrap());

@@ -57,5 +57,6 @@ pub mod prelude {
     pub use trsf::{NTrsf, Trsf};
     pub use trsf_form::NTrsfForm;
     pub use trsf2d::{NTrsf2d, Trsf2d};
+    pub use vec::{Vec , NVec };
     pub use vec2d::{NVec2d, Vec2d};
 }

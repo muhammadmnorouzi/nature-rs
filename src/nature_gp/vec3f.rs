@@ -2,7 +2,7 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-use crate::gp::NErrors;
+use super::prelude::*;
 
 mod gp {
     pub fn resolution_f32() -> f32 {

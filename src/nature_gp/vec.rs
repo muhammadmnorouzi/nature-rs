@@ -11,37 +11,231 @@ pub struct NVec {
     coord: NXYZ,
 }
 
-impl NVec {
+pub trait Vec {
     /// Creates a zero vector.
-    pub fn new() -> Self {
+     fn new() -> Self;
+
+    /// Creates a unitary vector from a direction.
+     fn new_from_dir(dir: &NDir) -> Self;
+
+    /// Creates a vector with the given coordinates.
+     fn new_from_coords(x: f64, y: f64, z: f64) -> Self;
+
+    /// Creates a vector from two points (P2 - P1).
+     fn new_from_points(p1: &NPoint3d, p2: &NPoint3d) -> Self;
+
+    /// Sets the coordinate at the given index (1=X, 2=Y, 3=Z).
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors>;
+
+    /// Sets all coordinates.
+     fn set_coords(&mut self, x: f64, y: f64, z: f64);
+
+    /// Sets the X coordinate.
+     fn set_x(&mut self, x: f64);
+
+    /// Sets the Y coordinate.
+     fn set_y(&mut self, y: f64);
+
+    /// Sets the Z coordinate.
+     fn set_z(&mut self, z: f64);
+
+    /// Sets the coordinates from an NXYZ.
+     fn set_xyz(&mut self, xyz: &NXYZ);
+
+    /// Gets the coordinate at the given index (1=X, 2=Y, 3=Z).
+     fn coord(&self, index: i32) -> Result<f64, NErrors>;
+
+    /// Gets all coordinates.
+     fn coords(&self) -> (f64, f64, f64);
+
+    /// Gets the X coordinate.
+     fn x(&self) -> f64;
+
+    /// Gets the Y coordinate.
+     fn y(&self) -> f64;
+
+    /// Gets the Z coordinate.
+     fn z(&self) -> f64;
+
+    /// Gets the coordinates as an NXYZ.
+     fn xyz(&self) -> NXYZ;
+
+    /// Checks if two vectors are equal within tolerances.
+     fn is_equal(&self, other: &NVec, linear_tolerance: f64, angular_tolerance: f64) -> bool;
+
+    /// Checks if the vector is normal to another within angular tolerance.
+     fn is_normal(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors>;
+
+    /// Checks if the vector is opposite to another within angular tolerance.
+     fn is_opposite(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors>;
+
+    /// Checks if the vector is parallel to another within angular tolerance.
+     fn is_parallel(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors>;
+
+    /// Computes the angle between two vectors (0 to PI radians).
+     fn angle(&self, other: &NVec) -> Result<f64, NErrors>;
+
+    /// Computes the signed angle between two vectors with respect to a reference vector (-PI to PI radians).
+     fn angle_with_ref(&self, other: &NVec, v_ref: &NVec) -> Result<f64, NErrors>;
+
+    /// Computes the magnitude of the vector.
+     fn magnitude(&self) -> f64;
+
+    /// Computes the square magnitude of the vector.
+     fn square_magnitude(&self) -> f64;
+
+    /// Adds another vector to this one.
+     fn add(&mut self, other: &NVec);
+
+    /// Returns the sum of two vectors.
+     fn added(&self, other: &NVec) -> NVec;
+
+    /// Subtracts another vector from this one.
+     fn subtract(&mut self, other: &NVec);
+
+    /// Returns the difference of two vectors.
+     fn subtracted(&self, other: &NVec) -> NVec;
+
+    /// Multiplies the vector by a scalar.
+     fn multiply(&mut self, scalar: f64);
+
+    /// Returns the vector multiplied by a scalar.
+     fn multiplied(&self, scalar: f64) -> NVec;
+
+    /// Divides the vector by a scalar.
+     fn divide(&mut self, scalar: f64) -> Result<(), NErrors>;
+
+    /// Returns the vector divided by a scalar.
+     fn divided(&self, scalar: f64) -> Result<NVec, NErrors>;
+
+    /// Computes the cross product with another vector.
+     fn cross(&mut self, other: &NVec);
+
+    /// Returns the cross product with another vector.
+     fn crossed(&self, other: &NVec) -> NVec;
+
+    /// Computes the magnitude of the cross product with another vector.
+     fn cross_magnitude(&self, other: &NVec) -> f64;
+
+    /// Computes the square magnitude of the cross product with another vector.
+     fn cross_square_magnitude(&self, other: &NVec) -> f64;
+
+    /// Computes the triple vector product (self = self ^ (v1 ^ v2)).
+     fn cross_cross(&mut self, v1: &NVec, v2: &NVec);
+
+    /// Returns the triple vector product (self ^ (v1 ^ v2)).
+     fn cross_crossed(&self, v1: &NVec, v2: &NVec) -> NVec;
+
+    /// Computes the dot product with another vector.
+     fn dot(&self, other: &NVec) -> f64;
+
+    /// Computes the triple scalar product (self * (v1 ^ v2)).
+     fn dot_cross(&self, v1: &NVec, v2: &NVec) -> f64;
+
+    /// Normalizes the vector.
+     fn normalize(&mut self) -> Result<(), NErrors>;
+
+    /// Returns a normalized copy of the vector.
+     fn normalized(&self) -> Result<NVec, NErrors>;
+
+    /// Reverses the direction of the vector.
+     fn reverse(&mut self);
+
+    /// Returns a reversed copy of the vector.
+     fn reversed(&self) -> NVec;
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2 + a3*v3 + v4.
+     fn set_linear_form(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec, v4: &NVec);
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2 + a3*v3.
+     fn set_linear_form_3(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec);
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2 + v3.
+     fn set_linear_form_2_plus(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, v3: &NVec);
+
+    /// Sets the vector to a linear combination: a1*v1 + a2*v2.
+     fn set_linear_form_2(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec);
+
+    /// Sets the vector to a linear combination: a1*v1 + v2.
+     fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec, v2: &NVec);
+
+    /// Sets the vector to a linear combination: v1 + v2.
+     fn set_linear_form_sum(&mut self, v1: &NVec, v2: &NVec);
+
+    /// Mirrors the vector with respect to another vector.
+     fn mirror_vec(&mut self, v: &NVec) -> Result<(), NErrors>;
+
+    /// Returns a mirrored copy with respect to another vector.
+     fn mirrored_vec(&self, v: &NVec) -> Result<NVec, NErrors>;
+
+    /// Mirrors the vector with respect to an axis.
+     fn mirror_ax1(&mut self, a1: &NAx1);
+
+    /// Returns a mirrored copy with respect to an axis.
+     fn mirrored_ax1(&self, a1: &NAx1) -> NVec;
+
+    /// Mirrors the vector with respect to a plane.
+     fn mirror_ax2(&mut self, a2: &NAx2) -> Result<(), NErrors>;
+
+    /// Returns a mirrored copy with respect to a plane.
+     fn mirrored_ax2(&self, a2: &NAx2) -> Result<NVec, NErrors>;
+
+    /// Rotates the vector around an axis by an angle.
+     fn rotate(&mut self, a1: &NAx1, ang: f64) -> Result<(), NErrors>;
+
+    /// Returns a rotated copy of the vector.
+     fn rotated(&self, a1: &NAx1, ang: f64) -> Result<NVec, NErrors>;
+
+    /// Scales the vector by a factor.
+     fn scale(&mut self, s: f64);
+
+    /// Returns a scaled copy of the vector.
+     fn scaled(&self, s: f64) -> NVec;
+
+    /// Transforms the vector with a transformation.
+     fn transform(&mut self, t: &NTrsf);
+
+    /// Returns a transformed copy of the vector.
+     fn transformed(&self, t: &NTrsf) -> NVec;
+
+    /// Dumps the vector as JSON.
+     fn dump_json(&self, out: &mut dyn Write, depth: i32);
+
+    /// Initializes the vector from JSON.
+     fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool;
+}
+
+pub impl Vec for NVec {
+    /// Creates a zero vector.
+     fn new() -> Self {
         NVec {
             coord: NXYZ::new(0.0, 0.0, 0.0),
         }
     }
 
     /// Creates a unitary vector from a direction.
-    pub fn new_from_dir(dir: &NDir) -> Self {
+     fn new_from_dir(dir: &NDir) -> Self {
         NVec {
             coord: dir.xyz(),
         }
     }
 
     /// Creates a vector with the given coordinates.
-    pub fn new_from_coords(x: f64, y: f64, z: f64) -> Self {
+     fn new_from_coords(x: f64, y: f64, z: f64) -> Self {
         NVec {
             coord: NXYZ::new(x, y, z),
         }
     }
 
     /// Creates a vector from two points (P2 - P1).
-    pub fn new_from_points(p1: &NPoint3d, p2: &NPoint3d) -> Self {
+     fn new_from_points(p1: &NPoint3d, p2: &NPoint3d) -> Self {
         NVec {
             coord: p2.xyz().subtracted(&p1.xyz()),
         }
     }
 
     /// Sets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors> {
+     fn set_coord(&mut self, index: i32, value: f64) -> Result<(), NErrors> {
         match index {
             1 => self.coord.set_x(value),
             2 => self.coord.set_y(value),
@@ -52,32 +246,32 @@ impl NVec {
     }
 
     /// Sets all coordinates.
-    pub fn set_coords(&mut self, x: f64, y: f64, z: f64) {
+     fn set_coords(&mut self, x: f64, y: f64, z: f64) {
         self.coord.set_coord(x, y, z);
     }
 
     /// Sets the X coordinate.
-    pub fn set_x(&mut self, x: f64) {
+     fn set_x(&mut self, x: f64) {
         self.coord.set_x(x);
     }
 
     /// Sets the Y coordinate.
-    pub fn set_y(&mut self, y: f64) {
+     fn set_y(&mut self, y: f64) {
         self.coord.set_y(y);
     }
 
     /// Sets the Z coordinate.
-    pub fn set_z(&mut self, z: f64) {
+     fn set_z(&mut self, z: f64) {
         self.coord.set_z(z);
     }
 
     /// Sets the coordinates from an NXYZ.
-    pub fn set_xyz(&mut self, xyz: &NXYZ) {
+     fn set_xyz(&mut self, xyz: &NXYZ) {
         self.coord = xyz.clone();
     }
 
     /// Gets the coordinate at the given index (1=X, 2=Y, 3=Z).
-    pub fn coord(&self, index: i32) -> Result<f64, NErrors> {
+     fn coord(&self, index: i32) -> Result<f64, NErrors> {
         match index {
             1 => Ok(self.coord.x()),
             2 => Ok(self.coord.y()),
@@ -87,32 +281,32 @@ impl NVec {
     }
 
     /// Gets all coordinates.
-    pub fn coords(&self) -> (f64, f64, f64) {
+     fn coords(&self) -> (f64, f64, f64) {
         (self.coord.x(), self.coord.y(), self.coord.z())
     }
 
     /// Gets the X coordinate.
-    pub fn x(&self) -> f64 {
+     fn x(&self) -> f64 {
         self.coord.x()
     }
 
     /// Gets the Y coordinate.
-    pub fn y(&self) -> f64 {
+     fn y(&self) -> f64 {
         self.coord.y()
     }
 
     /// Gets the Z coordinate.
-    pub fn z(&self) -> f64 {
+     fn z(&self) -> f64 {
         self.coord.z()
     }
 
     /// Gets the coordinates as an NXYZ.
-    pub fn xyz(&self) -> NXYZ {
+     fn xyz(&self) -> NXYZ {
         self.coord.clone()
     }
 
     /// Checks if two vectors are equal within tolerances.
-    pub fn is_equal(&self, other: &NVec, linear_tolerance: f64, angular_tolerance: f64) -> bool {
+     fn is_equal(&self, other: &NVec, linear_tolerance: f64, angular_tolerance: f64) -> bool {
         if self.magnitude() <= linear_tolerance || other.magnitude() <= linear_tolerance {
             (self.magnitude() - other.magnitude()).abs() <= linear_tolerance
         } else {
@@ -122,25 +316,25 @@ impl NVec {
     }
 
     /// Checks if the vector is normal to another within angular tolerance.
-    pub fn is_normal(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
+     fn is_normal(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = (std::f64::consts::PI / 2.0 - self.angle(other)?).abs();
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is opposite to another within angular tolerance.
-    pub fn is_opposite(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
+     fn is_opposite(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = std::f64::consts::PI - self.angle(other)?;
         Ok(angle <= angular_tolerance)
     }
 
     /// Checks if the vector is parallel to another within angular tolerance.
-    pub fn is_parallel(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
+     fn is_parallel(&self, other: &NVec, angular_tolerance: f64) -> Result<bool, NErrors> {
         let angle = self.angle(other)?;
         Ok(angle <= angular_tolerance || (std::f64::consts::PI - angle) <= angular_tolerance)
     }
 
     /// Computes the angle between two vectors (0 to PI radians).
-    pub fn angle(&self, other: &NVec) -> Result<f64, NErrors> {
+     fn angle(&self, other: &NVec) -> Result<f64, NErrors> {
         if self.magnitude() <= gp::resolution() || other.magnitude() <= gp::resolution() {
             return Err(NErrors::VectorWithNullMagnitude);
         }
@@ -149,7 +343,7 @@ impl NVec {
     }
 
     /// Computes the signed angle between two vectors with respect to a reference vector (-PI to PI radians).
-    pub fn angle_with_ref(&self, other: &NVec, v_ref: &NVec) -> Result<f64, NErrors> {
+     fn angle_with_ref(&self, other: &NVec, v_ref: &NVec) -> Result<f64, NErrors> {
         if self.magnitude() <= gp::resolution()
             || other.magnitude() <= gp::resolution()
             || v_ref.magnitude() <= gp::resolution()
@@ -162,53 +356,53 @@ impl NVec {
     }
 
     /// Computes the magnitude of the vector.
-    pub fn magnitude(&self) -> f64 {
+     fn magnitude(&self) -> f64 {
         self.coord.modulus()
     }
 
     /// Computes the square magnitude of the vector.
-    pub fn square_magnitude(&self) -> f64 {
+     fn square_magnitude(&self) -> f64 {
         self.coord.square_modulus()
     }
 
     /// Adds another vector to this one.
-    pub fn add(&mut self, other: &NVec) {
+     fn add(&mut self, other: &NVec) {
         self.coord.add(&other.coord);
     }
 
     /// Returns the sum of two vectors.
-    pub fn added(&self, other: &NVec) -> NVec {
+     fn added(&self, other: &NVec) -> NVec {
         NVec {
             coord: self.coord.added(&other.coord),
         }
     }
 
     /// Subtracts another vector from this one.
-    pub fn subtract(&mut self, other: &NVec) {
+     fn subtract(&mut self, other: &NVec) {
         self.coord.subtract(&other.coord);
     }
 
     /// Returns the difference of two vectors.
-    pub fn subtracted(&self, other: &NVec) -> NVec {
+     fn subtracted(&self, other: &NVec) -> NVec {
         NVec {
             coord: self.coord.subtracted(&other.coord),
         }
     }
 
     /// Multiplies the vector by a scalar.
-    pub fn multiply(&mut self, scalar: f64) {
+     fn multiply(&mut self, scalar: f64) {
         self.coord.multiply(scalar);
     }
 
     /// Returns the vector multiplied by a scalar.
-    pub fn multiplied(&self, scalar: f64) -> NVec {
+     fn multiplied(&self, scalar: f64) -> NVec {
         NVec {
             coord: self.coord.multiplied(scalar),
         }
     }
 
     /// Divides the vector by a scalar.
-    pub fn divide(&mut self, scalar: f64) -> Result<(), NErrors> {
+     fn divide(&mut self, scalar: f64) -> Result<(), NErrors> {
         if scalar.abs() <= gp::resolution() {
             return Err(NErrors::InvalidConstructionParameters);
         }
@@ -217,7 +411,7 @@ impl NVec {
     }
 
     /// Returns the vector divided by a scalar.
-    pub fn divided(&self, scalar: f64) -> Result<NVec, NErrors> {
+     fn divided(&self, scalar: f64) -> Result<NVec, NErrors> {
         if scalar.abs() <= gp::resolution() {
             return Err(NErrors::InvalidConstructionParameters);
         }
@@ -227,51 +421,51 @@ impl NVec {
     }
 
     /// Computes the cross product with another vector.
-    pub fn cross(&mut self, other: &NVec) {
+     fn cross(&mut self, other: &NVec) {
         self.coord.cross(&other.coord);
     }
 
     /// Returns the cross product with another vector.
-    pub fn crossed(&self, other: &NVec) -> NVec {
+     fn crossed(&self, other: &NVec) -> NVec {
         NVec {
             coord: self.coord.crossed(&other.coord),
         }
     }
 
     /// Computes the magnitude of the cross product with another vector.
-    pub fn cross_magnitude(&self, other: &NVec) -> f64 {
+     fn cross_magnitude(&self, other: &NVec) -> f64 {
         self.coord.cross_magnitude(&other.coord)
     }
 
     /// Computes the square magnitude of the cross product with another vector.
-    pub fn cross_square_magnitude(&self, other: &NVec) -> f64 {
+     fn cross_square_magnitude(&self, other: &NVec) -> f64 {
         self.coord.cross_square_magnitude(&other.coord)
     }
 
     /// Computes the triple vector product (self = self ^ (v1 ^ v2)).
-    pub fn cross_cross(&mut self, v1: &NVec, v2: &NVec) {
+     fn cross_cross(&mut self, v1: &NVec, v2: &NVec) {
         self.coord.cross_cross(&v1.coord, &v2.coord);
     }
 
     /// Returns the triple vector product (self ^ (v1 ^ v2)).
-    pub fn cross_crossed(&self, v1: &NVec, v2: &NVec) -> NVec {
+     fn cross_crossed(&self, v1: &NVec, v2: &NVec) -> NVec {
         NVec {
             coord: self.coord.cross_crossed(&v1.coord, &v2.coord),
         }
     }
 
     /// Computes the dot product with another vector.
-    pub fn dot(&self, other: &NVec) -> f64 {
+     fn dot(&self, other: &NVec) -> f64 {
         self.coord.dot(&other.coord)
     }
 
     /// Computes the triple scalar product (self * (v1 ^ v2)).
-    pub fn dot_cross(&self, v1: &NVec, v2: &NVec) -> f64 {
+     fn dot_cross(&self, v1: &NVec, v2: &NVec) -> f64 {
         self.coord.dot_cross(&v1.coord, &v2.coord)
     }
 
     /// Normalizes the vector.
-    pub fn normalize(&mut self) -> Result<(), NErrors> {
+     fn normalize(&mut self) -> Result<(), NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
             return Err(NErrors::VectorWithNullMagnitude);
@@ -281,7 +475,7 @@ impl NVec {
     }
 
     /// Returns a normalized copy of the vector.
-    pub fn normalized(&self) -> Result<NVec, NErrors> {
+     fn normalized(&self) -> Result<NVec, NErrors> {
         let mag = self.magnitude();
         if mag <= gp::resolution() {
             return Err(NErrors::VectorWithNullMagnitude);
@@ -292,49 +486,49 @@ impl NVec {
     }
 
     /// Reverses the direction of the vector.
-    pub fn reverse(&mut self) {
+     fn reverse(&mut self) {
         self.coord.reverse();
     }
 
     /// Returns a reversed copy of the vector.
-    pub fn reversed(&self) -> NVec {
+     fn reversed(&self) -> NVec {
         NVec {
             coord: self.coord.reversed(),
         }
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2 + a3*v3 + v4.
-    pub fn set_linear_form(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec, v4: &NVec) {
+     fn set_linear_form(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec, v4: &NVec) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord, a3, &v3.coord, &v4.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2 + a3*v3.
-    pub fn set_linear_form_3(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec) {
+     fn set_linear_form_3(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, a3: f64, v3: &NVec) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord, a3, &v3.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2 + v3.
-    pub fn set_linear_form_2_plus(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, v3: &NVec) {
+     fn set_linear_form_2_plus(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec, v3: &NVec) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord, &v3.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + a2*v2.
-    pub fn set_linear_form_2(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec) {
+     fn set_linear_form_2(&mut self, a1: f64, v1: &NVec, a2: f64, v2: &NVec) {
         self.coord.set_linear_form(a1, &v1.coord, a2, &v2.coord);
     }
 
     /// Sets the vector to a linear combination: a1*v1 + v2.
-    pub fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec, v2: &NVec) {
+     fn set_linear_form_1_plus(&mut self, a1: f64, v1: &NVec, v2: &NVec) {
         self.coord.set_linear_form(a1, &v1.coord, &v2.coord);
     }
 
     /// Sets the vector to a linear combination: v1 + v2.
-    pub fn set_linear_form_sum(&mut self, v1: &NVec, v2: &NVec) {
+     fn set_linear_form_sum(&mut self, v1: &NVec, v2: &NVec) {
         self.coord.set_linear_form(&v1.coord, &v2.coord);
     }
 
     /// Mirrors the vector with respect to another vector.
-    pub fn mirror_vec(&mut self, v: &NVec) -> Result<(), NErrors> {
+     fn mirror_vec(&mut self, v: &NVec) -> Result<(), NErrors> {
         let d = v.magnitude();
         if d <= gp::resolution() {
             return Err(NErrors::VectorWithNullMagnitude);
@@ -358,14 +552,14 @@ impl NVec {
     }
 
     /// Returns a mirrored copy with respect to another vector.
-    pub fn mirrored_vec(&self, v: &NVec) -> Result<NVec, NErrors> {
+     fn mirrored_vec(&self, v: &NVec) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.mirror_vec(v)?;
         Ok(result)
     }
 
     /// Mirrors the vector with respect to an axis.
-    pub fn mirror_ax1(&mut self, a1: &NAx1) {
+     fn mirror_ax1(&mut self, a1: &NAx1) {
         let v = a1.direction().xyz();
         let a = v.x();
         let b = v.y();
@@ -384,14 +578,14 @@ impl NVec {
     }
 
     /// Returns a mirrored copy with respect to an axis.
-    pub fn mirrored_ax1(&self, a1: &NAx1) -> NVec {
+     fn mirrored_ax1(&self, a1: &NAx1) -> NVec {
         let mut result = self.clone();
         result.mirror_ax1(a1);
         result
     }
 
     /// Mirrors the vector with respect to a plane.
-    pub fn mirror_ax2(&mut self, a2: &NAx2) -> Result<(), NErrors> {
+     fn mirror_ax2(&mut self, a2: &NAx2) -> Result<(), NErrors> {
         let z = a2.direction().xyz();
         let mut mir_xyz = z.crossed(&self.coord);
         if mir_xyz.modulus() <= gp::resolution() {
@@ -404,14 +598,14 @@ impl NVec {
     }
 
     /// Returns a mirrored copy with respect to a plane.
-    pub fn mirrored_ax2(&self, a2: &NAx2) -> Result<NVec, NErrors> {
+     fn mirrored_ax2(&self, a2: &NAx2) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.mirror_ax2(a2)?;
         Ok(result)
     }
 
     /// Rotates the vector around an axis by an angle.
-    pub fn rotate(&mut self, a1: &NAx1, ang: f64) -> Result<(), NErrors> {
+     fn rotate(&mut self, a1: &NAx1, ang: f64) -> Result<(), NErrors> {
         let mut t = NTrsf::new();
         t.set_rotation(a1, ang)?;
         self.coord.multiply(&t.vectorial_part());
@@ -419,26 +613,26 @@ impl NVec {
     }
 
     /// Returns a rotated copy of the vector.
-    pub fn rotated(&self, a1: &NAx1, ang: f64) -> Result<NVec, NErrors> {
+     fn rotated(&self, a1: &NAx1, ang: f64) -> Result<NVec, NErrors> {
         let mut result = self.clone();
         result.rotate(a1, ang)?;
         Ok(result)
     }
 
     /// Scales the vector by a factor.
-    pub fn scale(&mut self, s: f64) {
+     fn scale(&mut self, s: f64) {
         self.coord.multiply(s);
     }
 
     /// Returns a scaled copy of the vector.
-    pub fn scaled(&self, s: f64) -> NVec {
+     fn scaled(&self, s: f64) -> NVec {
         NVec {
             coord: self.coord.multiplied(s),
         }
     }
 
     /// Transforms the vector with a transformation.
-    pub fn transform(&mut self, t: &NTrsf) {
+     fn transform(&mut self, t: &NTrsf) {
         match t.form() {
             NTrsfForm::Identity | NTrsfForm::Translation => {}
             NTrsfForm::PntMirror => self.coord.reverse(),
@@ -448,14 +642,14 @@ impl NVec {
     }
 
     /// Returns a transformed copy of the vector.
-    pub fn transformed(&self, t: &NTrsf) -> NVec {
+     fn transformed(&self, t: &NTrsf) -> NVec {
         let mut result = self.clone();
         result.transform(t);
         result
     }
 
     /// Dumps the vector as JSON.
-    pub fn dump_json(&self, out: &mut dyn Write, depth: i32) {
+     fn dump_json(&self, out: &mut dyn Write, depth: i32) {
         let indent = " ".repeat((depth * 2) as usize);
         writeln!(
             out,
@@ -468,7 +662,7 @@ impl NVec {
     }
 
     /// Initializes the vector from JSON.
-    pub fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
+     fn init_from_json(&mut self, json: &str, pos: &mut usize) -> bool {
         let search = "\"coordinates\": [";
         if let Some(start) = json[*pos..].find(search) {
             *pos += start + search.len();
